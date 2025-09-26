@@ -57,3 +57,38 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Estilos customizados para toasts */
+@layer components {
+  .toaster [data-sonner-toast][data-type="error"] {
+    @apply bg-red-50 border-red-200 text-red-700;
+  }
+  
+  .toaster [data-sonner-toast][data-type="success"] {
+    @apply bg-green-50 border-green-200 text-green-700;
+  }
+  
+  .toaster [data-sonner-toast][data-type="warning"] {
+    @apply bg-yellow-50 border-yellow-200 text-yellow-700;
+  }
+  
+  .toaster [data-sonner-toast][data-type="info"] {
+    @apply bg-blue-50 border-blue-200 text-blue-700;
+  }
+
+  /* Empilhamento de toasts */
+  .toaster [data-sonner-toast] {
+    margin-bottom: 8px !important;
+  }
+
+  .toaster [data-sonner-toast]:not(:last-child) {
+    margin-bottom: 8px !important;
+  }
+
+  /* Container de toasts */
+  .toaster [data-sonner-toaster] {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+}

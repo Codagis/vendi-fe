@@ -133,10 +133,6 @@ export interface NavigationItem {
 }
 
 // Component Props Types
-export interface LoginScreenProps {
-  onLogin: (user: User) => void;
-}
-
 export interface NavigationProps {
   activeModule: string;
   setActiveModule: (module: string) => void;

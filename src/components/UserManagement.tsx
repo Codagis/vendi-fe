@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -15,91 +15,17 @@ import {
   Users,
   Eye,
   EyeOff,
+  RefreshCw,
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Switch } from './ui/switch';
 import { Checkbox } from './ui/checkbox';
+import { apiService, type Usuario, type Perfil, type UsuarioStats } from '../services/api';
+import { notificationService } from '../services/notificationService';
 
-// Mock data
-const mockUsers = [
-  {
-    id: 1,
-    username: 'admin',
-    name: 'Administrador Sistema',
-    email: 'admin@ontime.com',
-    role: 'admin',
-    status: 'active',
-    lastLogin: '2024-01-22 14:30',
-    createdAt: '2023-01-15',
-    permissions: ['all']
-  },
-  {
-    id: 2,
-    username: 'vendedor01',
-    name: 'João Vendedor',
-    email: 'joao@ontime.com',
-    role: 'seller',
-    status: 'active',
-    lastLogin: '2024-01-22 09:15',
-    createdAt: '2023-03-20',
-    permissions: ['pos', 'customers', 'reports_view']
-  },
-  {
-    id: 3,
-    username: 'estoque01',
-    name: 'Maria Estoque',
-    email: 'maria@ontime.com',
-    role: 'stock',
-    status: 'active',
-    lastLogin: '2024-01-21 16:45',
-    createdAt: '2023-02-10',
-    permissions: ['inventory', 'products', 'reports_view']
-  },
-  {
-    id: 4,
-    username: 'financeiro01',
-    name: 'Pedro Financeiro',
-    email: 'pedro@ontime.com',
-    role: 'financial',
-    status: 'inactive',
-    lastLogin: '2024-01-20 11:20',
-    createdAt: '2023-04-05',
-    permissions: ['financial', 'reports', 'customers_view']
-  }
-];
-
-const roles = [
-  {
-    value: 'admin',
-    label: 'Administrador',
-    description: 'Acesso total ao sistema',
-    color: 'bg-red-500',
-    icon: Shield
-  },
-  {
-    value: 'seller',
-    label: 'Vendedor',
-    description: 'Acesso ao PDV e clientes',
-    color: 'bg-green-500',
-    icon: User
-  },
-  {
-    value: 'stock',
-    label: 'Estoquista',
-    description: 'Gestão de produtos e estoque',
-    color: 'bg-blue-500',
-    icon: Users
-  },
-  {
-    value: 'financial',
-    label: 'Financeiro',
-    description: 'Controle financeiro e relatórios',
-    color: 'bg-purple-500',
-    icon: UserCog
-  }
-];
+// Dados mockados removidos - usando apenas dados do backend
 
 const allPermissions = [
   { id: 'dashboard', label: 'Dashboard', category: 'Sistema' },
@@ -116,29 +42,124 @@ const allPermissions = [
 ];
 
 export function UserManagement() {
-  const [users, setUsers] = useState(mockUsers);
+  const [users, setUsers] = useState<Usuario[]>([]);
+  const [perfis, setPerfis] = useState<Perfil[]>([]);
+  const [stats, setStats] = useState<UsuarioStats | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<any>(null);
+  const [editingUser, setEditingUser] = useState<Usuario | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
     name: '',
     email: '',
     password: '',
+    cracha: '',
     role: 'seller',
     status: 'active',
     permissions: [] as string[]
   });
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = selectedRole === 'all' || user.role === selectedRole;
-    return matchesSearch && matchesRole;
-  });
+  // Carregar perfis e estatísticas ao montar o componente
+  useEffect(() => {
+    loadPerfis();
+    loadStats();
+  }, []);
+
+  // Carregar usuários quando os perfis estiverem carregados ou quando os filtros mudarem
+  useEffect(() => {
+    if (perfis.length > 0) {
+      loadUsers();
+    }
+  }, [perfis, selectedRole]);
+
+  // Debounce para busca por texto
+  useEffect(() => {
+    if (perfis.length > 0) {
+      const timeoutId = setTimeout(() => {
+        loadUsers();
+      }, 300); // 300ms de delay
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [searchTerm]);
+
+  const loadPerfis = async () => {
+    try {
+      const perfisData = await apiService.getPerfis();
+      setPerfis(perfisData);
+    } catch (error) {
+      console.error('Erro ao carregar perfis:', error);
+      // Fallback para perfis mockados
+      const perfisMock = [
+        { id: 1, nome: 'Administrador', codigo: 'admin', ativo: true, sistema: true, deleted: false, createdAt: '', updatedAt: '' },
+        { id: 2, nome: 'Vendedor', codigo: 'seller', ativo: true, sistema: true, deleted: false, createdAt: '', updatedAt: '' },
+        { id: 3, nome: 'Estoquista', codigo: 'stock', ativo: true, sistema: true, deleted: false, createdAt: '', updatedAt: '' },
+        { id: 4, nome: 'Financeiro', codigo: 'financial', ativo: true, sistema: true, deleted: false, createdAt: '', updatedAt: '' }
+      ];
+      setPerfis(perfisMock);
+    }
+  };
+
+  const loadStats = async () => {
+    try {
+      const statsData = await apiService.getUsuarioStats();
+      setStats(statsData);
+    } catch (error) {
+      console.error('Erro ao carregar estatísticas:', error);
+      // Fallback para estatísticas zeradas
+      setStats({
+        totalUsuarios: 0,
+        usuariosAtivos: 0,
+        usuariosInativos: 0,
+        administradores: 0,
+        vendedores: 0,
+        outrosPerfis: 0
+      });
+    }
+  };
+
+  const loadUsers = async () => {
+    setIsLoading(true);
+    try {
+      // Preparar filtros para o backend
+      const filters: any = {};
+      
+      if (searchTerm.trim()) {
+        // Enviar o termo de busca para todos os campos: nome, username e email
+        filters.nome = searchTerm;
+        filters.username = searchTerm;
+        filters.email = searchTerm;
+      }
+      
+      if (selectedRole !== 'all') {
+        // Encontrar o perfilId baseado no código do perfil selecionado
+        const perfilSelecionado = perfis.find(p => p.codigo === selectedRole);
+        if (perfilSelecionado) {
+          filters.perfilId = perfilSelecionado.id;
+        }
+      }
+
+      const usuarios = await apiService.getUsuarios(filters);
+      setUsers(usuarios);
+      
+      // Recarregar estatísticas se não há filtros ativos (mostra dados gerais)
+      if (!searchTerm.trim() && selectedRole === 'all') {
+        loadStats();
+      }
+    } catch (error) {
+      console.error('Erro ao carregar usuários:', error);
+      // Em caso de erro, manter lista vazia
+      setUsers([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Os usuários já vêm filtrados do backend
+  const filteredUsers = users;
 
   const resetForm = () => {
     setFormData({
@@ -146,6 +167,7 @@ export function UserManagement() {
       name: '',
       email: '',
       password: '',
+      cracha: '',
       role: 'seller',
       status: 'active',
       permissions: []
@@ -158,21 +180,38 @@ export function UserManagement() {
     setIsAddDialogOpen(true);
   };
 
-  const handleEditUser = (user: any) => {
+  const handleEditUser = (user: Usuario) => {
+    // Encontrar o perfil do usuário
+    let perfilCodigo = 'seller'; // default
+    if (user.perfilNome) {
+      // Primeiro tentar encontrar por código
+      let perfil = perfis.find(p => p.codigo === user.perfilNome);
+      
+      // Se não encontrar por código, tentar por nome
+      if (!perfil) {
+        perfil = perfis.find(p => p.nome.toLowerCase() === user.perfilNome.toLowerCase());
+      }
+      
+      if (perfil) {
+        perfilCodigo = perfil.codigo;
+      }
+    }
+    
     setFormData({
       username: user.username,
-      name: user.name,
+      name: user.nome,
       email: user.email,
       password: '',
-      role: user.role,
-      status: user.status,
-      permissions: user.permissions
+      cracha: user.cracha || '',
+      role: perfilCodigo,
+      status: user.ativo ? 'active' : 'inactive',
+      permissions: user.permissions || []
     });
     setEditingUser(user);
     setIsAddDialogOpen(true);
   };
 
-  const handleSaveUser = () => {
+  const handleSaveUser = async () => {
     if (!formData.username || !formData.name || !formData.email) {
       alert('Preencha todos os campos obrigatórios');
       return;
@@ -183,39 +222,102 @@ export function UserManagement() {
       return;
     }
 
-    const userData = {
-      ...formData,
-      id: editingUser ? editingUser.id : Date.now(),
-      createdAt: editingUser ? editingUser.createdAt : new Date().toISOString().split('T')[0],
-      lastLogin: editingUser ? editingUser.lastLogin : null
-    };
+        try {
+          // Encontrar o perfilId baseado no código do perfil selecionado
+          const perfilSelecionado = perfis.find(p => p.codigo === formData.role);
+          if (!perfilSelecionado) {
+            alert('Perfil selecionado não encontrado');
+            return;
+          }
 
-    if (editingUser) {
-      setUsers(users.map(u => u.id === editingUser.id ? userData : u));
-    } else {
-      setUsers([...users, userData]);
+          const userData: any = {
+            username: formData.username,
+            nome: formData.name,
+            email: formData.email,
+            cracha: formData.cracha || null,
+            perfilId: perfilSelecionado.id,
+            ativo: formData.status === 'active',
+            empresaId: 1, // Empresa padrão - em uma implementação real, você teria um dropdown
+            lojaId: 1, // Loja padrão - em uma implementação real, você teria um dropdown
+            permissions: formData.permissions // Incluir permissões na criação e atualização
+          };
+
+      // Só incluir senha se não estiver vazia
+      if (formData.password && formData.password.trim() !== '') {
+        userData.senha = formData.password;
+      }
+
+      if (editingUser) {
+        await apiService.updateUsuario(editingUser.id, userData);
+      } else {
+        await apiService.createUsuario(userData);
+      }
+
+      // Recarregar lista de usuários
+      await loadUsers();
+      setIsAddDialogOpen(false);
+      resetForm();
+      notificationService.showSuccess('Usuário salvo com sucesso!');
+    } catch (error: any) {
+      // O erro já foi tratado pelo interceptor da API
+      console.error('Erro ao salvar usuário:', error);
     }
-
-    setIsAddDialogOpen(false);
-    resetForm();
   };
 
-  const handleDeleteUser = (userId: number) => {
+  const handleDeleteUser = async (userId: number) => {
     if (confirm('Tem certeza que deseja excluir este usuário?')) {
-      setUsers(users.filter(u => u.id !== userId));
+      try {
+        await apiService.deleteUsuario(userId);
+        await loadUsers(); // Recarregar lista
+        notificationService.showSuccess('Usuário excluído com sucesso!');
+      } catch (error: any) {
+        // O erro já foi tratado pelo interceptor da API
+        console.error('Erro ao deletar usuário:', error);
+      }
     }
   };
 
-  const toggleUserStatus = (userId: number) => {
-    setUsers(users.map(user => 
-      user.id === userId 
-        ? { ...user, status: user.status === 'active' ? 'inactive' : 'active' }
-        : user
-    ));
+  const toggleUserStatus = async (userId: number) => {
+    try {
+      const user = users.find(u => u.id === userId);
+      if (user) {
+        await apiService.alterarStatusUsuario(userId, !user.ativo);
+        await loadUsers(); // Recarregar lista
+        notificationService.showSuccess(`Usuário ${!user.ativo ? 'ativado' : 'desativado'} com sucesso!`);
+      }
+    } catch (error: any) {
+      // O erro já foi tratado pelo interceptor da API
+      console.error('Erro ao alterar status do usuário:', error);
+    }
   };
 
-  const getRoleInfo = (roleValue: string): { label: string; color: string } => {
-    return roles.find(role => role.value === roleValue) || roles[1];
+  const getRoleInfo = (perfilNome: string): { label: string; color: string } => {
+    // Primeiro, tentar encontrar por código
+    let perfil = perfis.find(p => p.codigo === perfilNome);
+    
+    // Se não encontrar por código, tentar por nome
+    if (!perfil) {
+      perfil = perfis.find(p => p.nome.toLowerCase() === perfilNome.toLowerCase());
+    }
+    
+    if (perfil) {
+      return {
+        label: perfil.nome,
+        color: getRoleColor(perfil.codigo)
+      };
+    }
+    
+    return { label: perfilNome || 'Desconhecido', color: 'bg-gray-500' };
+  };
+
+  const getRoleColor = (roleValue: string): string => {
+    const colorMap: { [key: string]: string } = {
+      'admin': 'bg-red-500',
+      'seller': 'bg-green-500',
+      'stock': 'bg-blue-500',
+      'financial': 'bg-purple-500'
+    };
+    return colorMap[roleValue] || 'bg-gray-500';
   };
 
   const getStatusColor = (status: string): string => {
@@ -284,10 +386,21 @@ export function UserManagement() {
           <h1 className="text-2xl font-bold text-gray-900">Gestão de Usuários</h1>
           <p className="text-gray-600">Gerencie usuários e permissões do sistema</p>
         </div>
-        <Button onClick={handleAddUser} className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Usuário
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={loadUsers} 
+            variant="outline" 
+            disabled={isLoading}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            Atualizar
+          </Button>
+          <Button onClick={handleAddUser} className="bg-blue-600 hover:bg-blue-700">
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Usuário
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -298,7 +411,9 @@ export function UserManagement() {
               <Users className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Total de Usuários</p>
-                <p className="text-2xl font-bold text-gray-900">{users.length}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {stats?.totalUsuarios ?? 0}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -310,7 +425,7 @@ export function UserManagement() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Usuários Ativos</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {users.filter(u => u.status === 'active').length}
+                  {stats?.usuariosAtivos ?? 0}
                 </p>
               </div>
             </div>
@@ -323,7 +438,7 @@ export function UserManagement() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Administradores</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {users.filter(u => u.role === 'admin').length}
+                  {stats?.administradores ?? 0}
                 </p>
               </div>
             </div>
@@ -336,7 +451,7 @@ export function UserManagement() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Vendedores</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {users.filter(u => u.role === 'seller').length}
+                  {stats?.vendedores ?? 0}
                 </p>
               </div>
             </div>
@@ -354,12 +469,17 @@ export function UserManagement() {
             <div>
               <Label>Buscar</Label>
               <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                {isLoading ? (
+                  <div className="absolute left-3 top-3 h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600"></div>
+                ) : (
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                )}
                 <Input
-                  placeholder="Nome, usuário ou e-mail..."
+                  placeholder="Buscar por nome, usuário ou e-mail..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -371,11 +491,10 @@ export function UserManagement() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os papéis</SelectItem>
-                  {roles.map(role => (
-                    <SelectItem key={role.value} value={role.value}>
+                  {perfis.map(perfil => (
+                    <SelectItem key={perfil.codigo} value={perfil.codigo}>
                       <div className="flex items-center gap-2">
-                        <role.icon className="h-4 w-4" />
-                        <span>{role.label}</span>
+                        <span>{perfil.nome}</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -413,48 +532,64 @@ export function UserManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.map((user) => {
-                  const roleInfo = getRoleInfo(user.role);
-                  // const RoleIcon = roleInfo.icon;
-                  
-                  return (
-                    <TableRow key={user.id}>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8">
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
+                        <span>Carregando usuários...</span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : filteredUsers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                      Nenhum usuário encontrado
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredUsers.map((user) => {
+                    const roleInfo = getRoleInfo(user.perfilNome || 'seller');
+                    
+                    return (
+                      <TableRow key={user.id}>
                       <TableCell>
                         <div>
-                          <p className="font-medium text-gray-900">{user.name}</p>
+                          <p className="font-medium text-gray-900">{user.nome}</p>
                           <p className="text-sm text-gray-500">@{user.username}</p>
                           <p className="text-sm text-gray-500">{user.email}</p>
+                          {user.cracha && (
+                            <p className="text-sm text-blue-600">Crachá: {user.cracha}</p>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          {/* <RoleIcon className="h-4 w-4" /> */}
                           <div>
                             <Badge className={`${roleInfo.color} text-white`}>
                               {roleInfo.label}
                             </Badge>
-                            {/* <p className="text-xs text-gray-500 mt-1">{roleInfo.description}</p> */}
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Badge className={`${getStatusColor(user.status)} text-white`}>
-                            {user.status === 'active' ? 'Ativo' : 'Inativo'}
+                          <Badge className={`${getStatusColor(user.ativo ? 'active' : 'inactive')} text-white`}>
+                            {user.ativo ? 'Ativo' : 'Inativo'}
                           </Badge>
                           <Switch
-                            checked={user.status === 'active'}
+                            checked={user.ativo}
                             onCheckedChange={() => toggleUserStatus(user.id)}
                           />
                         </div>
                       </TableCell>
                       <TableCell>
                         <p className="text-sm">
-                          {user.lastLogin ? formatDateTime(user.lastLogin) : 'Nunca'}
+                          {user.ultimoLogin ? formatDateTime(user.ultimoLogin) : 'Nunca'}
                         </p>
                       </TableCell>
                       <TableCell>
-                        <p className="text-sm">{formatDate(user.createdAt)}</p>
+                        <p className="text-sm">{user.createdAt ? formatDate(user.createdAt) : 'N/A'}</p>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -470,15 +605,16 @@ export function UserManagement() {
                             variant="outline"
                             onClick={() => handleDeleteUser(user.id)}
                             className="text-red-600 hover:text-red-700"
-                            disabled={user.role === 'admin' && users.filter(u => u.role === 'admin').length === 1}
+                            disabled={user.root && users.filter(u => u.root).length === 1}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
                     </TableRow>
-                  );
-                })}
+                    );
+                  })
+                )}
               </TableBody>
             </Table>
           </div>
@@ -528,6 +664,15 @@ export function UserManagement() {
               </div>
               
               <div>
+                <Label>Crachá</Label>
+                <Input
+                  placeholder="Digite o número do crachá (opcional)"
+                  value={formData.cracha}
+                  onChange={(e) => setFormData({ ...formData, cracha: e.target.value })}
+                />
+              </div>
+              
+              <div>
                 <Label>Senha {!editingUser && '*'}</Label>
                 <div className="relative">
                   <Input
@@ -555,20 +700,18 @@ export function UserManagement() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {roles.map(role => {
-                      const RoleIcon = role.icon;
-                      return (
-                        <SelectItem key={role.value} value={role.value}>
-                          <div className="flex items-center gap-2">
-                            <RoleIcon className="h-4 w-4" />
-                            <div>
-                              <div>{role.label}</div>
-                              <div className="text-xs text-gray-500">{role.description}</div>
-                            </div>
+                    {perfis.map(perfil => (
+                      <SelectItem key={perfil.codigo} value={perfil.codigo}>
+                        <div className="flex items-center gap-2">
+                          <div>
+                            <div>{perfil.nome}</div>
+                            {perfil.descricao && (
+                              <div className="text-xs text-gray-500">{perfil.descricao}</div>
+                            )}
                           </div>
-                        </SelectItem>
-                      );
-                    })}
+                        </div>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

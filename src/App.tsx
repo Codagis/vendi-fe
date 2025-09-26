@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { LoginScreen } from './components/LoginScreen';
 import { Dashboard } from './components/Dashboard';
 import { POSSystem } from './components/POSSystem';
 import { ProductManagement } from './components/ProductManagement';
@@ -10,27 +9,18 @@ import { Reports } from './components/Reports';
 import { Navigation } from './components/Navigation';
 import { UserManagement } from './components/UserManagement';
 import { Settings } from './components/Settings';
-import type { User } from './types';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { useAuth } from './contexts/AuthContext';
+import { Toaster } from './components/ui/sonner';
 
 export default function App(): JSX.Element {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeModule, setActiveModule] = useState<string>('dashboard');
-
-  const handleLogin = (user: User): void => {
-    setCurrentUser(user);
-    setIsLoggedIn(true);
-  };
+  const { user, logout } = useAuth();
 
   const handleLogout = (): void => {
-    setCurrentUser(null);
-    setIsLoggedIn(false);
+    logout();
     setActiveModule('dashboard');
   };
-
-  if (!isLoggedIn) {
-    return <LoginScreen onLogin={handleLogin} />;
-  }
 
   const renderActiveModule = (): JSX.Element => {
     switch (activeModule) {
@@ -58,18 +48,23 @@ export default function App(): JSX.Element {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <Navigation 
-        activeModule={activeModule}
-        setActiveModule={setActiveModule}
-        currentUser={currentUser}
-        onLogout={handleLogout}
-      />
-      <div className="flex-1 flex flex-col">
-        <div className="flex-1 p-6">
-          {renderActiveModule()}
+    <>
+      <ProtectedRoute>
+        <div className="min-h-screen bg-gray-50 flex">
+          <Navigation 
+            activeModule={activeModule}
+            setActiveModule={setActiveModule}
+            currentUser={user}
+            onLogout={handleLogout}
+          />
+          <div className="flex-1 flex flex-col">
+            <div className="flex-1 p-6">
+              {renderActiveModule()}
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </ProtectedRoute>
+      <Toaster position="top-right" richColors />
+    </>
   );
 }
