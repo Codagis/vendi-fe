@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { apiService, authUtils, type LoginResponse } from '../services/api';
 import { notificationService } from '../services/notificationService';
-import type { User, UserRole } from '../types';
+import { extractUserData, isTokenValid } from '../services/jwtService';
+import type { User } from '../types';
 
 interface AuthContextType {
   user: User | null;
@@ -40,27 +41,66 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return;
       }
 
-      // Verificar se o token é válido
-      const isValid = await apiService.validateToken();
-      if (!isValid) {
-        // Token inválido, limpar dados
+      // Verificar se o token é válido localmente
+      if (!isTokenValid(token)) {
+        // Token expirado, tentar refresh token
+        await tryRefreshToken();
+        return;
+      }
+
+      // Extrair dados do usuário do token
+      const userData = extractUserData(token);
+      if (!userData) {
+        // Dados do usuário inválidos, limpar dados
         authUtils.removeToken();
         setIsAuthenticated(false);
         setUser(null);
         return;
       }
 
-      // Token válido, recuperar dados do usuário do localStorage
-      const savedUser = authUtils.getUser();
-      if (savedUser) {
-        setUser(savedUser);
-        setIsAuthenticated(true);
-      } else {
-        // Se não há dados salvos, fazer logout
-        authUtils.removeToken();
-        setIsAuthenticated(false);
-        setUser(null);
-      }
+      // Converter UserTokenData para User
+      const user: User = {
+        id: userData.id,
+        username: userData.username,
+        email: userData.email,
+        nome: userData.nome,
+        root: userData.root,
+        ativo: userData.ativo,
+        contaBloqueada: userData.contaBloqueada,
+        perfil: {
+          id: 0, // Não disponível no token
+          nome: userData.perfilNome,
+          codigo: '', // Não disponível no token
+          ativo: true,
+          permissoes: userData.permissoes.map(chave => ({
+            id: 0, // Não disponível no token
+            chave,
+            nome: chave, // Usar chave como nome
+            descricao: '', // Não disponível no token
+            ativa: true
+          }))
+        },
+        empresa: {
+          id: userData.empresaId,
+          razaoSocial: userData.empresaNome,
+          nomeFantasia: userData.empresaNome,
+          cnpj: '', // Não disponível no token
+          ativa: true
+        },
+        loja: userData.lojaId ? {
+          id: userData.lojaId,
+          nome: userData.lojaNome || '',
+          ativa: true
+        } : null,
+        ultimoLogin: null, // Não disponível no token
+        tentativasFalhadas: 0, // Não disponível no token
+        deleted: false
+      };
+
+      // Token válido e dados extraídos com sucesso
+      setIsAuthenticated(true);
+      setUser(user);
+      
     } catch (error) {
       console.error('Erro ao verificar autenticação:', error);
       authUtils.removeToken();
@@ -68,6 +108,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUser(null);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const tryRefreshToken = async () => {
+    try {
+      const refreshToken = authUtils.getRefreshToken();
+      if (!refreshToken) {
+        authUtils.removeToken();
+        setIsAuthenticated(false);
+        setUser(null);
+        return;
+      }
+
+      const response = await apiService.refreshToken(refreshToken);
+      
+      // Salvar novos tokens
+      authUtils.setToken(response.accessToken);
+      authUtils.setRefreshToken(response.refreshToken);
+      
+      // Verificar autenticação novamente com o novo token
+      await checkAuth();
+      
+    } catch (error) {
+      console.error('Erro ao renovar token:', error);
+      authUtils.removeToken();
+      setIsAuthenticated(false);
+      setUser(null);
     }
   };
 
@@ -82,26 +149,62 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       const response: LoginResponse = await apiService.login(loginRequest);
       
-      // Salvar token e dados do usuário
+      // Salvar tokens
       authUtils.setToken(response.token);
-      authUtils.setUser(response);
+      authUtils.setRefreshToken(response.refreshToken);
+      
+      // Extrair dados do usuário do token
+      const userData = extractUserData(response.token);
+      if (!userData) {
+        throw new Error('Erro ao extrair dados do usuário do token');
+      }
 
-      // Converter para formato esperado
-      const userData: User = {
-        id: response.id,
-        username: response.username,
-        name: response.nome,
-        role: response.role as UserRole,
-        permissions: response.permissions,
-        store: response.lojaId ? {
-          id: response.lojaId,
-          name: response.lojaNome || '',
-          address: ''
-        } : undefined
+      // Converter UserTokenData para User
+      const user: User = {
+        id: userData.id,
+        username: userData.username,
+        email: userData.email,
+        nome: userData.nome,
+        root: userData.root,
+        ativo: userData.ativo,
+        contaBloqueada: userData.contaBloqueada,
+        perfil: {
+          id: 0, // Não disponível no token
+          nome: userData.perfilNome,
+          codigo: '', // Não disponível no token
+          ativo: true,
+          permissoes: userData.permissoes.map(chave => ({
+            id: 0, // Não disponível no token
+            chave,
+            nome: chave, // Usar chave como nome
+            descricao: '', // Não disponível no token
+            ativa: true
+          }))
+        },
+        empresa: {
+          id: userData.empresaId,
+          razaoSocial: userData.empresaNome,
+          nomeFantasia: userData.empresaNome,
+          cnpj: '', // Não disponível no token
+          ativa: true
+        },
+        loja: userData.lojaId ? {
+          id: userData.lojaId,
+          nome: userData.lojaNome || '',
+          ativa: true
+        } : null,
+        ultimoLogin: null, // Não disponível no token
+        tentativasFalhadas: 0, // Não disponível no token
+        deleted: false
       };
 
-      setUser(userData);
+      setUser(user);
       setIsAuthenticated(true);
+      
+      // Salvar flag de autenticação
+      localStorage.setItem('isAuthenticated', 'true');
+      localStorage.setItem('authTimestamp', Date.now().toString());
+      
       notificationService.showSuccess('Login realizado com sucesso!');
     } catch (error) {
       console.error('Erro no login:', error);
@@ -113,9 +216,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const logout = () => {
+    // Limpar todos os dados sensíveis
     authUtils.removeToken();
     setUser(null);
     setIsAuthenticated(false);
+    
+    // Limpar localStorage completamente
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('authTimestamp');
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    
+    // Limpar sessionStorage
+    sessionStorage.clear();
+    
     notificationService.showInfo('Logout realizado com sucesso!');
   };
 

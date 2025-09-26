@@ -1,6 +1,7 @@
-import { } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
+import { useTokenPermissions } from '../hooks/useTokenPermissions';
 import { 
   LayoutDashboard, 
   ShoppingCart, 
@@ -12,19 +13,23 @@ import {
   UserCog, 
   Settings, 
   LogOut,
-  Store
+  Store,
+  Shield,
+  Key
 } from 'lucide-react';
 
 const menuItems = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, color: 'bg-blue-500' },
-  { id: 'pos', label: 'PDV - Vendas', icon: ShoppingCart, color: 'bg-green-500' },
-  { id: 'products', label: 'Produtos', icon: Package, color: 'bg-purple-500' },
-  { id: 'customers', label: 'Clientes', icon: Users, color: 'bg-orange-500' },
-  { id: 'inventory', label: 'Estoque', icon: Warehouse, color: 'bg-yellow-500' },
-  { id: 'financial', label: 'Financeiro', icon: DollarSign, color: 'bg-emerald-500' },
-  { id: 'reports', label: 'Relatórios', icon: FileText, color: 'bg-blue-600' },
-  { id: 'users', label: 'Usuários', icon: UserCog, color: 'bg-gray-500' },
-  { id: 'settings', label: 'Configurações', icon: Settings, color: 'bg-slate-500' }
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, color: 'bg-blue-500', permission: 'dashboard' },
+  { id: 'pos', label: 'PDV - Vendas', icon: ShoppingCart, color: 'bg-green-500', permission: 'pos' },
+  { id: 'products', label: 'Produtos', icon: Package, color: 'bg-purple-500', permission: 'products' },
+  { id: 'customers', label: 'Clientes', icon: Users, color: 'bg-orange-500', permission: 'customers' },
+  { id: 'inventory', label: 'Estoque', icon: Warehouse, color: 'bg-yellow-500', permission: 'inventory' },
+  { id: 'financial', label: 'Financeiro', icon: DollarSign, color: 'bg-emerald-500', permission: 'financial' },
+  { id: 'reports', label: 'Relatórios', icon: FileText, color: 'bg-blue-600', permission: 'reports' },
+  { id: 'users', label: 'Usuários', icon: UserCog, color: 'bg-gray-500', permission: 'users' },
+  { id: 'perfis', label: 'Perfis', icon: Shield, color: 'bg-indigo-500', permission: 'perfis' },
+  { id: 'permissoes', label: 'Permissões', icon: Key, color: 'bg-rose-500', permission: 'permissoes' },
+  { id: 'settings', label: 'Configurações', icon: Settings, color: 'bg-slate-500', permission: 'settings' }
 ];
 
 const getRoleLabel = (role: string): string => {
@@ -53,15 +58,25 @@ export function Navigation({ activeModule, setActiveModule, currentUser, onLogou
   currentUser: any;
   onLogout: () => void;
 }) {
-  const hasPermission = (moduleId: string): boolean => {
-    if (!currentUser || !currentUser.permissions) return false;
-    return currentUser.permissions.includes('all') || currentUser.permissions.includes(moduleId);
-  };
+  const { hasPermission, isRoot } = useTokenPermissions();
+  const [filteredMenuItems, setFilteredMenuItems] = useState(menuItems);
 
-  const filteredMenuItems = menuItems.filter(item => hasPermission(item.id));
+  // Filtrar itens do menu baseado nas permissões do token
+  useEffect(() => {
+    const filtered = menuItems.filter(item => {
+      // Se for root, pode acessar tudo
+      if (isRoot()) {
+        return true;
+      }
+      // Verificar permissão específica
+      return hasPermission(item.permission);
+    });
+    setFilteredMenuItems(filtered);
+  }, [hasPermission, isRoot]);
 
   return (
     <div className="w-64 bg-white shadow-lg border-r border-gray-200 flex flex-col">
+      
       {/* Header */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center gap-3 mb-4">

@@ -19,8 +19,20 @@ export interface LoginRequest {
   lojaId?: number;
 }
 
+export interface RefreshTokenRequest {
+  refreshToken: string;
+}
+
+export interface RefreshTokenResponse {
+  accessToken: string;
+  refreshToken: string;
+  tokenType: string;
+  expiresIn: number;
+}
+
 export interface LoginResponse {
   token: string;
+  refreshToken: string;
   type: string;
   id: number;
   username: string;
@@ -28,6 +40,7 @@ export interface LoginResponse {
   email: string;
   role: string;
   permissions: string[];
+  root?: boolean;
   empresaId: number;
   empresaNome: string;
   lojaId?: number;
@@ -69,6 +82,19 @@ export interface Perfil {
   ativo: boolean;
   sistema: boolean;
   deleted: boolean;
+  permissoes?: Permissao[];
+  permissaoChaves?: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Permissao {
+  id: number;
+  chave: string;
+  nome: string;
+  descricao?: string;
+  categoria: string;
+  ativo: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -140,6 +166,23 @@ class ApiService {
     );
   }
 
+  // Métodos genéricos para chamadas HTTP
+  async post<T>(url: string, data?: any, config?: any): Promise<AxiosResponse<T>> {
+    return await this.api.post<T>(url, data, config);
+  }
+
+  async get<T>(url: string, config?: any): Promise<AxiosResponse<T>> {
+    return await this.api.get<T>(url, config);
+  }
+
+  async put<T>(url: string, data?: any, config?: any): Promise<AxiosResponse<T>> {
+    return await this.api.put<T>(url, data, config);
+  }
+
+  async delete<T>(url: string, config?: any): Promise<AxiosResponse<T>> {
+    return await this.api.delete<T>(url, config);
+  }
+
   // Métodos de autenticação
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     const response = await this.api.post<LoginResponse>('/auth/login', credentials);
@@ -155,6 +198,11 @@ class ApiService {
     }
   }
 
+  async refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
+    const response = await this.api.post<RefreshTokenResponse>('/auth/refresh', { refreshToken });
+    return response.data;
+  }
+
   // Métodos de usuários
   async getUsuarios(filters?: {
     nome?: string;
@@ -166,11 +214,6 @@ class ApiService {
     ativo?: boolean;
   }): Promise<Usuario[]> {
     const response = await this.api.get<Usuario[]>('/usuarios', { params: filters });
-    return response.data;
-  }
-
-  async getPerfis(): Promise<Perfil[]> {
-    const response = await this.api.get<Perfil[]>('/perfis/ativos');
     return response.data;
   }
 
@@ -202,6 +245,94 @@ class ApiService {
     await this.api.patch(`/usuarios/${id}/status`, null, { params: { ativo } });
   }
 
+  async validarExclusaoUsuario(id: number): Promise<{ canDelete: boolean; reasons?: string[] }> {
+    const response = await this.api.get<{ canDelete: boolean; reasons?: string[] }>(`/usuarios/${id}/can-delete`);
+    return response.data;
+  }
+
+  // Métodos para perfis
+  async getPerfis(): Promise<Perfil[]> {
+    const response = await this.api.get<Perfil[]>('/perfis');
+    return response.data;
+  }
+
+  async getPerfisAtivos(): Promise<Perfil[]> {
+    const response = await this.api.get<Perfil[]>('/perfis/ativos');
+    return response.data;
+  }
+
+  async getPerfil(id: number): Promise<Perfil> {
+    const response = await this.api.get<Perfil>(`/perfis/${id}`);
+    return response.data;
+  }
+
+  async createPerfil(perfil: Partial<Perfil>): Promise<Perfil> {
+    const response = await this.api.post<Perfil>('/perfis', perfil);
+    return response.data;
+  }
+
+  async updatePerfil(id: number, perfil: Partial<Perfil>): Promise<Perfil> {
+    const response = await this.api.put<Perfil>(`/perfis/${id}`, perfil);
+    return response.data;
+  }
+
+  async deletePerfil(id: number): Promise<void> {
+    await this.api.delete(`/perfis/${id}`);
+  }
+
+  async alterarStatusPerfil(id: number, ativo: boolean): Promise<void> {
+    await this.api.patch(`/perfis/${id}/status`, null, { params: { ativo } });
+  }
+
+  // Métodos para permissões
+  async getPermissoes(): Promise<Permissao[]> {
+    const response = await this.api.get<Permissao[]>('/permissoes');
+    return response.data;
+  }
+
+  async getPermissoesAtivas(): Promise<Permissao[]> {
+    const response = await this.api.get<Permissao[]>('/permissoes/ativas');
+    return response.data;
+  }
+
+  async getPermissoesPorCategoria(categoria: string): Promise<Permissao[]> {
+    const response = await this.api.get<Permissao[]>(`/permissoes/categoria/${categoria}`);
+    return response.data;
+  }
+
+  async getPermissoesPorPerfil(perfilId: number): Promise<Permissao[]> {
+    const response = await this.api.get<Permissao[]>(`/permissoes/perfil/${perfilId}`);
+    return response.data;
+  }
+
+  async getCategoriasPermissoes(): Promise<string[]> {
+    const response = await this.api.get<string[]>('/permissoes/categorias');
+    return response.data;
+  }
+
+  async getPermissao(id: number): Promise<Permissao> {
+    const response = await this.api.get<Permissao>(`/permissoes/${id}`);
+    return response.data;
+  }
+
+  async createPermissao(permissao: Partial<Permissao>): Promise<Permissao> {
+    const response = await this.api.post<Permissao>('/permissoes', permissao);
+    return response.data;
+  }
+
+  async updatePermissao(id: number, permissao: Partial<Permissao>): Promise<Permissao> {
+    const response = await this.api.put<Permissao>(`/permissoes/${id}`, permissao);
+    return response.data;
+  }
+
+  async deletePermissao(id: number): Promise<void> {
+    await this.api.delete(`/permissoes/${id}`);
+  }
+
+  async alterarStatusPermissao(id: number, ativo: boolean): Promise<void> {
+    await this.api.patch(`/permissoes/${id}/status`, null, { params: { ativo } });
+  }
+
   // Métodos para lojas (mock por enquanto)
   async getLojas(): Promise<Loja[]> {
     // Por enquanto, retorna dados mockados
@@ -229,7 +360,16 @@ export const authUtils = {
   
   removeToken: () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
+  },
+
+  setRefreshToken: (refreshToken: string) => {
+    localStorage.setItem('refreshToken', refreshToken);
+  },
+  
+  getRefreshToken: () => {
+    return localStorage.getItem('refreshToken');
   },
   
   setUser: (user: any) => {

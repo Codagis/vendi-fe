@@ -8,6 +8,9 @@ import { FinancialManagement } from './components/FinancialManagement';
 import { Reports } from './components/Reports';
 import { Navigation } from './components/Navigation';
 import { UserManagement } from './components/UserManagement';
+import { PerfilManagement } from './components/PerfilManagement';
+import { PermissaoManagement } from './components/PermissaoManagement';
+import { PermissionTest } from './components/PermissionTest';
 import { Settings } from './components/Settings';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useAuth } from './contexts/AuthContext';
@@ -40,6 +43,12 @@ export default function App(): JSX.Element {
         return <Reports />;
       case 'users':
         return <UserManagement />;
+      case 'perfis':
+        return <PerfilManagement />;
+      case 'permissoes':
+        return <PermissaoManagement />;
+      case 'test':
+        return <PermissionTest />;
       case 'settings':
         return <Settings />;
       default:

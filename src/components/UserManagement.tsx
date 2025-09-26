@@ -22,6 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Switch } from './ui/switch';
 import { Checkbox } from './ui/checkbox';
+import { ConfirmationDialog } from './ui/confirmation-dialog';
 import { apiService, type Usuario, type Perfil, type UsuarioStats } from '../services/api';
 import { notificationService } from '../services/notificationService';
 
@@ -61,6 +62,12 @@ export function UserManagement() {
     status: 'active',
     permissions: [] as string[]
   });
+
+  // Estados para popup de confirmação de exclusão
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<Usuario | null>(null);
+  const [deleteValidation, setDeleteValidation] = useState<{ canDelete: boolean; reasons?: string[] } | null>(null);
+  const [isValidatingDelete, setIsValidatingDelete] = useState(false);
 
   // Carregar perfis e estatísticas ao montar o componente
   useEffect(() => {
@@ -211,6 +218,46 @@ export function UserManagement() {
     setIsAddDialogOpen(true);
   };
 
+  const handleDeleteUser = async (user: Usuario) => {
+    setUserToDelete(user);
+    setIsValidatingDelete(true);
+    
+    try {
+      const validation = await apiService.validarExclusaoUsuario(user.id);
+      setDeleteValidation(validation);
+      setIsDeleteDialogOpen(true);
+    } catch (error) {
+      console.error('Erro ao validar exclusão:', error);
+      notificationService.showError('Erro ao validar exclusão do usuário');
+    } finally {
+      setIsValidatingDelete(false);
+    }
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return;
+
+    try {
+      await apiService.deleteUsuario(userToDelete.id);
+      notificationService.showSuccess('Usuário excluído com sucesso!');
+      loadUsers();
+      loadStats();
+    } catch (error) {
+      console.error('Erro ao excluir usuário:', error);
+      notificationService.showError('Erro ao excluir usuário');
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setUserToDelete(null);
+      setDeleteValidation(null);
+    }
+  };
+
+  const cancelDeleteUser = () => {
+    setIsDeleteDialogOpen(false);
+    setUserToDelete(null);
+    setDeleteValidation(null);
+  };
+
   const handleSaveUser = async () => {
     if (!formData.username || !formData.name || !formData.email) {
       alert('Preencha todos os campos obrigatórios');
@@ -264,18 +311,6 @@ export function UserManagement() {
     }
   };
 
-  const handleDeleteUser = async (userId: number) => {
-    if (confirm('Tem certeza que deseja excluir este usuário?')) {
-      try {
-        await apiService.deleteUsuario(userId);
-        await loadUsers(); // Recarregar lista
-        notificationService.showSuccess('Usuário excluído com sucesso!');
-      } catch (error: any) {
-        // O erro já foi tratado pelo interceptor da API
-        console.error('Erro ao deletar usuário:', error);
-      }
-    }
-  };
 
   const toggleUserStatus = async (userId: number) => {
     try {
@@ -603,9 +638,9 @@ export function UserManagement() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleDeleteUser(user.id)}
+                            onClick={() => handleDeleteUser(user)}
                             className="text-red-600 hover:text-red-700"
-                            disabled={user.root && users.filter(u => u.root).length === 1}
+                            disabled={isValidatingDelete}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -787,6 +822,23 @@ export function UserManagement() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Confirmation Dialog for Delete */}
+      <ConfirmationDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={cancelDeleteUser}
+        onConfirm={confirmDeleteUser}
+        title="Confirmar Exclusão"
+        description={
+          deleteValidation?.canDelete 
+            ? `Tem certeza que deseja excluir o usuário "${userToDelete?.nome}"? Esta ação não pode ser desfeita.`
+            : `Não é possível excluir o usuário "${userToDelete?.nome}" pelos seguintes motivos: ${deleteValidation?.reasons?.join(', ')}`
+        }
+        confirmText={deleteValidation?.canDelete ? "Excluir" : "Entendi"}
+        cancelText="Cancelar"
+        variant="destructive"
+        isLoading={isValidatingDelete}
+      />
     </div>
   );
 }

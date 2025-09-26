@@ -2,11 +2,40 @@
 export interface User {
   id: number;
   username: string;
+  email: string;
+  nome: string;
   password?: string;
-  name: string;
-  role: UserRole;
-  permissions: string[];
-  store?: Store;
+  root: boolean;
+  ativo: boolean;
+  contaBloqueada: boolean;
+  perfil: {
+    id: number;
+    nome: string;
+    codigo: string;
+    ativo: boolean;
+    permissoes: {
+      id: number;
+      chave: string;
+      nome: string;
+      descricao: string;
+      ativa: boolean;
+    }[];
+  };
+  empresa: {
+    id: number;
+    razaoSocial: string;
+    nomeFantasia: string;
+    cnpj: string;
+    ativa: boolean;
+  };
+  loja: {
+    id: number;
+    nome: string;
+    ativa: boolean;
+  } | null;
+  ultimoLogin: Date | null;
+  tentativasFalhadas: number;
+  deleted: boolean;
 }
 
 export type UserRole = 'admin' | 'seller' | 'stock' | 'financial';
