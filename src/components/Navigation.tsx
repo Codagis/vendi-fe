@@ -69,7 +69,7 @@ export function Navigation({ activeModule, setActiveModule, currentUser, onLogou
             <Store className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="font-bold text-gray-900">Ontime-Sales</h1>
+            <h1 className="font-bold text-gray-900">Vendi</h1>
             <p className="text-xs text-gray-500">Sistema PDV</p>
           </div>
         </div>

@@ -618,7 +618,7 @@ export function Settings() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div className="p-3 bg-gray-50 rounded">
                   <strong>Versão do Sistema:</strong>
-                  <p>Ontime-Sales v2.1.0</p>
+                  <p>Vendi v2.1.0</p>
                 </div>
                 <div className="p-3 bg-gray-50 rounded">
                   <strong>Última Atualização:</strong>
