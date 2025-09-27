@@ -41,7 +41,6 @@ export function PermissaoManagement() {
     ativo: true
   });
 
-  // Verificar se o usuário tem permissão para acessar esta tela
   if (!hasPermission('permissoes')) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -54,13 +53,11 @@ export function PermissaoManagement() {
     );
   }
 
-  // Carregar dados ao montar o componente
   useEffect(() => {
     loadPermissoes();
     loadCategorias();
   }, []);
 
-  // Debounce para busca por texto
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       loadPermissoes();
@@ -99,7 +96,6 @@ export function PermissaoManagement() {
     }
   };
 
-  // Filtrar permissões por termo de busca
   const filteredPermissoes = permissoes.filter(permissao => 
     permissao.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
     permissao.chave.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -156,7 +152,7 @@ export function PermissaoManagement() {
       }
 
       await loadPermissoes();
-      await loadCategorias(); // Recarregar categorias caso tenha sido criada uma nova
+      await loadCategorias();
       setIsAddDialogOpen(false);
       resetForm();
       notificationService.showSuccess('Permissão salva com sucesso!');
@@ -170,7 +166,7 @@ export function PermissaoManagement() {
       try {
         await apiService.deletePermissao(permissaoId);
         await loadPermissoes();
-        await loadCategorias(); // Recarregar categorias
+        await loadCategorias();
         notificationService.showSuccess('Permissão excluída com sucesso!');
       } catch (error: any) {
         console.error('Erro ao deletar permissão:', error);

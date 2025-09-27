@@ -41,11 +41,9 @@ export class NotificationService {
   public handleApiError(error: any) {
     console.error('API Error:', error);
 
-    // Se for um erro de resposta da API
     if (error.response?.data) {
       const apiError: ApiError = error.response.data;
       
-      // Mapear códigos de status para mensagens amigáveis
       const statusMessages: Record<number, string> = {
         400: 'Dados inválidos fornecidos',
         401: 'Credenciais inválidas',
@@ -58,7 +56,6 @@ export class NotificationService {
 
       const friendlyMessage = statusMessages[apiError.status] || apiError.message || 'Erro inesperado';
       
-      // Se houver detalhes de validação, mostrar o primeiro erro
       let description = '';
       if (apiError.details && Object.keys(apiError.details).length > 0) {
         const firstError = Object.values(apiError.details)[0];
@@ -67,10 +64,8 @@ export class NotificationService {
 
       this.showError(friendlyMessage, description);
     } else if (error.message) {
-      // Erro de rede ou outro tipo
       this.showError('Erro de conexão', error.message);
     } else {
-      // Erro genérico
       this.showError('Erro inesperado', 'Tente novamente mais tarde');
     }
   }
@@ -89,5 +84,4 @@ export class NotificationService {
   }
 }
 
-// Instância singleton
 export const notificationService = NotificationService.getInstance();

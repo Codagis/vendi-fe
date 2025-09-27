@@ -15,7 +15,6 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import type { SalesData, CategoryData, TopProduct, LowStockProduct } from '../types';
 
-// Mock data para o dashboard
 const salesData: SalesData[] = [
   { name: 'Seg', vendas: 2400, meta: 3000 },
   { name: 'Ter', vendas: 1398, meta: 3000 },

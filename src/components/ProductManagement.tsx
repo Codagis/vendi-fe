@@ -18,9 +18,7 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-// import { ImageWithFallback } from './components/figma/ImageWithFallback';
 
-// Mock data
 const mockProducts = [
   {
     id: '7891234567890',
@@ -159,7 +157,7 @@ export function ProductManagement() {
       salePrice: parseFloat(formData.salePrice),
       stock: parseInt(formData.stock) || 0,
       minStock: parseInt(formData.minStock) || 0,
-      id: formData.id || `789${Date.now()}` // Generate barcode if not provided
+      id: formData.id || `789${Date.now()}`
     };
 
     if (editingProduct) {

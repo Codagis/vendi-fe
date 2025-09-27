@@ -21,7 +21,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-// Mock data
 const mockReceivables = [
   {
     id: 1,
@@ -383,7 +382,6 @@ export function FinancialManagement() {
                       .filter(r => selectedFilter === 'all' || r.status === selectedFilter)
                       .map((receivable) => {
                         const status = getStatusBadge(receivable.status);
-                        // const StatusIcon = status.icon;
                         const isOverdue = receivable.status === 'pending' && new Date(receivable.dueDate) < new Date();
                         
                         return (
@@ -465,7 +463,6 @@ export function FinancialManagement() {
                   <TableBody>
                     {payables.map((payable) => {
                       const status = getStatusBadge(payable.status);
-                      // const StatusIcon = status.icon;
                       const isOverdue = payable.status === 'pending' && new Date(payable.dueDate) < new Date();
                       
                       return (

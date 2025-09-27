@@ -24,44 +24,37 @@ import { Separator } from './ui/separator';
 
 export function Settings() {
   const [settings, setSettings] = useState({
-    // Store settings
     storeName: 'Loja Centro - Ontime Sales',
     storeAddress: 'Rua Principal, 123, Centro, São Paulo - SP',
     storePhone: '(11) 3456-7890',
     storeEmail: 'contato@loja.com',
     storeCNPJ: '12.345.678/0001-90',
     
-    // System settings
     currency: 'BRL',
     language: 'pt-BR',
     timezone: 'America/Sao_Paulo',
     dateFormat: 'dd/MM/yyyy',
     
-    // POS settings
     printerName: 'Epson TM-T20II',
     printerPort: 'USB001',
     receiptFooter: 'Obrigado pela preferência!',
     showProductImages: true,
     playNotificationSounds: true,
     
-    // Fiscal settings
     enableNFCe: false,
     nfceEnvironment: 'homologacao',
     certificatePath: '',
     certificatePassword: '',
     
-    // Notifications
     lowStockAlert: true,
     lowStockThreshold: 5,
     emailNotifications: true,
     smsNotifications: false,
     
-    // Security
     sessionTimeout: 60,
     requirePasswordChange: false,
     enableTwoFactor: false,
     
-    // Backup
     autoBackup: true,
     backupFrequency: 'daily',
     backupRetention: 30
@@ -75,7 +68,6 @@ export function Settings() {
   };
 
   const handleSave = (section: string) => {
-    // Simulate save
     alert(`Configurações de ${section} salvas com sucesso!`);
   };
 

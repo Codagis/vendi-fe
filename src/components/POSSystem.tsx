@@ -19,7 +19,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Label } from './ui/label';
 import type { Product, Customer, CartItem, PaymentMethod } from '../types';
 
-// Mock products data
 const mockProducts: Product[] = [
   { id: '7891234567890', name: 'Smartphone Galaxy', price: 899.99, stock: 15, category: 'Eletrônicos' },
   { id: '7891234567891', name: 'Notebook Dell', price: 2499.90, stock: 8, category: 'Eletrônicos' },
@@ -105,7 +104,6 @@ export function POSSystem(): JSX.Element {
       return;
     }
 
-    // Simulate payment processing
     alert(`Venda realizada com sucesso!\nTotal: R$ ${total.toFixed(2)}\nTroco: R$ ${change.toFixed(2)}`);
     clearCart();
     setPaymentMethod('');

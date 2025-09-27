@@ -1,4 +1,3 @@
-// User and Authentication Types
 export interface User {
   id: number;
   username: string;
@@ -46,7 +45,6 @@ export interface Store {
   address: string;
 }
 
-// Product Types
 export interface Product {
   id: string;
   name: string;
@@ -64,7 +62,6 @@ export interface CartItem extends Product {
   quantity: number;
 }
 
-// Customer Types
 export interface Customer {
   id: number;
   name: string;
@@ -77,7 +74,6 @@ export interface Customer {
   updatedAt?: Date;
 }
 
-// Sale and Transaction Types
 export interface Sale {
   id: string;
   customerId?: number;
@@ -95,7 +91,6 @@ export interface Sale {
 
 export type PaymentMethod = 'cash' | 'debit' | 'credit' | 'pix';
 
-// Inventory Types
 export interface InventoryItem {
   id: string;
   productId: string;
@@ -106,7 +101,6 @@ export interface InventoryItem {
   lastUpdated: Date;
 }
 
-// Financial Types
 export interface FinancialTransaction {
   id: string;
   type: 'income' | 'expense';
@@ -117,7 +111,6 @@ export interface FinancialTransaction {
   reference?: string;
 }
 
-// Dashboard Types
 export interface DashboardStats {
   todaySales: number;
   transactions: number;
@@ -153,7 +146,6 @@ export interface LowStockProduct {
   status: 'critical' | 'warning';
 }
 
-// Navigation Types
 export interface NavigationItem {
   id: string;
   label: string;
@@ -161,7 +153,6 @@ export interface NavigationItem {
   permissions?: string[];
 }
 
-// Component Props Types
 export interface NavigationProps {
   activeModule: string;
   setActiveModule: (module: string) => void;
@@ -169,7 +160,6 @@ export interface NavigationProps {
   onLogout: () => void;
 }
 
-// API Response Types
 export interface ApiResponse<T> {
   data: T;
   success: boolean;

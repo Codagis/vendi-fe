@@ -38,7 +38,6 @@ export function PerfilManagement() {
     permissaoIds: [] as number[]
   });
 
-  // Verificar se o usuário tem permissão para acessar esta tela
   if (!hasPermission('perfis')) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -51,13 +50,11 @@ export function PerfilManagement() {
     );
   }
 
-  // Carregar dados ao montar o componente
   useEffect(() => {
     loadPerfis();
     loadPermissoes();
   }, []);
 
-  // Debounce para busca por texto
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       loadPerfis();
@@ -90,7 +87,6 @@ export function PerfilManagement() {
   };
 
 
-  // Filtrar perfis por termo de busca
   const filteredPerfis = perfis.filter(perfil => 
     perfil.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
     perfil.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -205,7 +201,6 @@ export function PerfilManagement() {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
-  // Group permissions by category
   const permissionsByCategory = permissoes.reduce((acc: any, permissao: Permissao) => {
     if (!acc[permissao.categoria]) {
       acc[permissao.categoria] = [];

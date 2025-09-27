@@ -1,9 +1,3 @@
-/**
- * Serviço de segurança para validação de integridade no frontend.
- * 
- * @author Sistema Vendi
- * @version 1.0
- */
 
 import { apiService } from './api';
 
@@ -36,15 +30,10 @@ export interface ModuleAccessResult {
 
 class SecurityService {
   private validationCache = new Map<string, { result: any; timestamp: number }>();
-  private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
-
-  /**
-   * Valida a integridade do usuário atual.
-   */
+  private readonly CACHE_DURATION = 5 * 60 * 1000; 
   async validateUserIntegrity(userId: number, rootStatus?: boolean): Promise<SecurityValidationResult> {
     const cacheKey = `integrity_${userId}_${rootStatus}`;
     
-    // Verificar cache
     const cached = this.validationCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
       return cached.result;
@@ -60,7 +49,6 @@ class SecurityService {
 
       const result: SecurityValidationResult = response.data;
       
-      // Armazenar no cache
       this.validationCache.set(cacheKey, {
         result,
         timestamp: Date.now()
@@ -77,13 +65,9 @@ class SecurityService {
     }
   }
 
-  /**
-   * Valida se o usuário tem uma permissão específica.
-   */
   async validatePermission(userId: number, permission: string): Promise<boolean> {
     const cacheKey = `permission_${userId}_${permission}`;
     
-    // Verificar cache
     const cached = this.validationCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
       return cached.result.hasPermission;
@@ -99,7 +83,6 @@ class SecurityService {
 
       const result: PermissionValidationResult = response.data;
       
-      // Armazenar no cache
       this.validationCache.set(cacheKey, {
         result,
         timestamp: Date.now()
@@ -112,13 +95,9 @@ class SecurityService {
     }
   }
 
-  /**
-   * Valida se o usuário pode acessar um módulo específico.
-   */
   async validateModuleAccess(userId: number, module: string): Promise<boolean> {
     const cacheKey = `module_${userId}_${module}`;
     
-    // Verificar cache
     const cached = this.validationCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
       return cached.result.canAccess;
@@ -134,7 +113,6 @@ class SecurityService {
 
       const result: ModuleAccessResult = response.data;
       
-      // Armazenar no cache
       this.validationCache.set(cacheKey, {
         result,
         timestamp: Date.now()
@@ -147,9 +125,6 @@ class SecurityService {
     }
   }
 
-  /**
-   * Obtém dados seguros do usuário do backend.
-   */
   async getUserData(userId: number): Promise<any> {
     try {
       const response = await apiService.get(`/security/user-data/${userId}`);
@@ -160,16 +135,10 @@ class SecurityService {
     }
   }
 
-  /**
-   * Limpa o cache de validações.
-   */
   clearCache(): void {
     this.validationCache.clear();
   }
 
-  /**
-   * Valida se os dados locais são consistentes com o backend.
-   */
   async validateDataConsistency(localUser: any): Promise<boolean> {
     if (!localUser || !localUser.id) {
       return false;
@@ -181,7 +150,6 @@ class SecurityService {
         return false;
       }
 
-      // Verificar consistência dos dados críticos
       const isConsistent = 
         backendData.id === localUser.id &&
         backendData.username === localUser.username &&

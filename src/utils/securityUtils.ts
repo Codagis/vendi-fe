@@ -1,9 +1,3 @@
-/**
- * Utilitários de segurança para validação de integridade no frontend.
- * 
- * @author Sistema Vendi
- * @version 1.0
- */
 
 export interface SecurityValidation {
   isValid: boolean;
@@ -19,20 +13,15 @@ export interface UserIntegrityCheck {
   lastValidation: Date;
 }
 
-/**
- * Valida a integridade dos dados do usuário.
- */
 export function validateUserIntegrity(user: any): SecurityValidation {
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  // Validações obrigatórias
   if (!user) {
     errors.push('Usuário não encontrado');
     return { isValid: false, errors, warnings };
   }
 
-  // Validações mais flexíveis - só erros críticos
   if (user.id !== undefined && (typeof user.id !== 'number' || user.id <= 0)) {
     errors.push('ID do usuário inválido');
   }
@@ -45,12 +34,10 @@ export function validateUserIntegrity(user: any): SecurityValidation {
     errors.push('Permissões inválidas');
   }
 
-  // Validação de root - mais flexível
   if (user.root !== undefined && typeof user.root !== 'boolean') {
     warnings.push('Status root pode estar inválido');
   }
 
-  // Validações de segurança
   if (user.permissions && user.permissions.includes('all') && !user.root) {
     warnings.push('Usuário tem permissão "all" mas não é root - possível inconsistência');
   }
@@ -59,7 +46,6 @@ export function validateUserIntegrity(user: any): SecurityValidation {
     warnings.push('Usuário root sem permissões definidas');
   }
 
-  // Validação de token (se disponível) - mais flexível
   if (user.token !== undefined && typeof user.token !== 'string') {
     errors.push('Token inválido');
   }
@@ -71,9 +57,6 @@ export function validateUserIntegrity(user: any): SecurityValidation {
   };
 }
 
-/**
- * Valida se o usuário tem permissão para uma ação específica.
- */
 export function validatePermission(user: any, permission: string): SecurityValidation {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -83,12 +66,10 @@ export function validatePermission(user: any, permission: string): SecurityValid
     return { isValid: false, errors, warnings };
   }
 
-  // Usuários root sempre têm acesso
   if (user.root === true) {
     return { isValid: true, errors: [], warnings: [] };
   }
 
-  // Verificar permissões - mais flexível
   if (!user.permissions || !Array.isArray(user.permissions)) {
     warnings.push('Permissões não disponíveis - assumindo acesso negado');
     return { isValid: false, errors, warnings };
@@ -107,9 +88,6 @@ export function validatePermission(user: any, permission: string): SecurityValid
   };
 }
 
-/**
- * Valida se o usuário pode acessar um módulo específico.
- */
 export function validateModuleAccess(user: any, module: string): SecurityValidation {
   const modulePermissions: { [key: string]: string[] } = {
     'dashboard': ['dashboard'],
@@ -134,9 +112,6 @@ export function validateModuleAccess(user: any, module: string): SecurityValidat
   return validateAnyPermission(user, requiredPermissions);
 }
 
-/**
- * Valida se o usuário tem qualquer uma das permissões especificadas.
- */
 export function validateAnyPermission(user: any, permissions: string[]): SecurityValidation {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -146,12 +121,10 @@ export function validateAnyPermission(user: any, permissions: string[]): Securit
     return { isValid: false, errors, warnings };
   }
 
-  // Usuários root sempre têm acesso
   if (user.root === true) {
     return { isValid: true, errors: [], warnings: [] };
   }
 
-  // Verificar permissões - mais flexível
   if (!user.permissions || !Array.isArray(user.permissions)) {
     warnings.push('Permissões não disponíveis - assumindo acesso negado');
     return { isValid: false, errors, warnings };
@@ -171,9 +144,6 @@ export function validateAnyPermission(user: any, permissions: string[]): Securit
   };
 }
 
-/**
- * Valida se o usuário tem todas as permissões especificadas.
- */
 export function validateAllPermissions(user: any, permissions: string[]): SecurityValidation {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -183,12 +153,10 @@ export function validateAllPermissions(user: any, permissions: string[]): Securi
     return { isValid: false, errors, warnings };
   }
 
-  // Usuários root sempre têm acesso
   if (user.root === true) {
     return { isValid: true, errors: [], warnings: [] };
   }
 
-  // Verificar permissões - mais flexível
   if (!user.permissions || !Array.isArray(user.permissions)) {
     warnings.push('Permissões não disponíveis - assumindo acesso negado');
     return { isValid: false, errors, warnings };
@@ -209,14 +177,10 @@ export function validateAllPermissions(user: any, permissions: string[]): Securi
   };
 }
 
-/**
- * Valida a integridade do token JWT.
- */
 export function validateTokenIntegrity(token: string): SecurityValidation {
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  // Se não há token, não é um erro crítico
   if (!token) {
     return { isValid: true, errors: [], warnings: [] };
   }
@@ -226,14 +190,12 @@ export function validateTokenIntegrity(token: string): SecurityValidation {
     return { isValid: false, errors, warnings };
   }
 
-  // Verificar formato básico do JWT (3 partes separadas por ponto)
   const parts = token.split('.');
   if (parts.length !== 3) {
     warnings.push('Formato de token pode estar inválido');
     return { isValid: true, errors, warnings };
   }
 
-  // Verificar se as partes não estão vazias
   if (parts.some(part => part.length === 0)) {
     warnings.push('Token pode estar malformado');
     return { isValid: true, errors, warnings };
@@ -246,9 +208,6 @@ export function validateTokenIntegrity(token: string): SecurityValidation {
   };
 }
 
-/**
- * Valida se uma requisição é segura.
- */
 export function validateRequestSecurity(request: any): SecurityValidation {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -258,12 +217,10 @@ export function validateRequestSecurity(request: any): SecurityValidation {
     return { isValid: false, errors, warnings };
   }
 
-  // Verificar se tem token de autorização
   if (!request.headers || !request.headers.Authorization) {
     errors.push('Token de autorização não fornecido');
   }
 
-  // Verificar se o token está no formato correto
   const authHeader = request.headers?.Authorization;
   if (authHeader && !authHeader.startsWith('Bearer ')) {
     errors.push('Formato de autorização inválido');
@@ -276,9 +233,6 @@ export function validateRequestSecurity(request: any): SecurityValidation {
   };
 }
 
-/**
- * Gera um hash simples para validação de integridade.
- */
 export function generateIntegrityHash(data: any): string {
   const str = JSON.stringify(data);
   let hash = 0;
@@ -286,15 +240,12 @@ export function generateIntegrityHash(data: any): string {
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32-bit integer
+    hash = hash & hash;
   }
   
   return Math.abs(hash).toString(16);
 }
 
-/**
- * Valida se os dados não foram modificados.
- */
 export function validateDataIntegrity(originalData: any, currentData: any, expectedHash?: string): SecurityValidation {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -310,7 +261,6 @@ export function validateDataIntegrity(originalData: any, currentData: any, expec
     errors.push('Dados foram modificados - hash não confere');
   }
 
-  // Verificar se campos críticos não foram alterados
   const criticalFields = ['id', 'username', 'root'];
   for (const field of criticalFields) {
     if (originalData[field] !== currentData[field]) {
@@ -325,9 +275,6 @@ export function validateDataIntegrity(originalData: any, currentData: any, expec
   };
 }
 
-/**
- * Log de segurança para auditoria.
- */
 export function logSecurityEvent(event: string, details: any, user?: any): void {
   const timestamp = new Date().toISOString();
   const userId = user?.id || 'UNKNOWN';
@@ -336,19 +283,14 @@ export function logSecurityEvent(event: string, details: any, user?: any): void 
   console.warn(`[SECURITY] ${timestamp} - User: ${username} (${userId}) - Event: ${event}`, details);
 }
 
-/**
- * Valida se o ambiente é seguro.
- */
 export function validateEnvironmentSecurity(): SecurityValidation {
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  // Verificar se está em HTTPS em produção
   if (typeof window !== 'undefined' && window.location.protocol !== 'https:') {
     errors.push('Aplicação deve usar HTTPS em produção');
   }
 
-  // Verificar se há console.log em produção
   if (console.log.toString().includes('native code')) {
     warnings.push('Console.log detectado em produção');
   }

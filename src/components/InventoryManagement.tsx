@@ -23,7 +23,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 
-// Mock data
 const mockProducts = [
   {
     id: '7891234567890',
@@ -171,7 +170,6 @@ export function InventoryManagement() {
       notes: movementData.notes
     };
 
-    // Update product stock
     const updatedProducts = products.map(product => {
       if (product.id === selectedProduct.id) {
         let newStock = product.currentStock;
@@ -180,7 +178,7 @@ export function InventoryManagement() {
         } else if (movementData.type === 'exit') {
           newStock -= Math.abs(quantity);
         } else if (movementData.type === 'adjustment') {
-          newStock = quantity; // For adjustments, quantity is the new total
+          newStock = quantity;
         }
         return { ...product, currentStock: Math.max(0, newStock) };
       }
@@ -454,7 +452,6 @@ export function InventoryManagement() {
                   </TableHeader>
                   <TableBody>
                     {movements.map((movement) => {
-                      // const Icon = getMovementIcon(movement.type);
                       const colorClass = getMovementColor(movement.type);
                       
                       return (

@@ -61,14 +61,11 @@ export function Navigation({ activeModule, setActiveModule, currentUser, onLogou
   const { hasPermission, isRoot } = useTokenPermissions();
   const [filteredMenuItems, setFilteredMenuItems] = useState(menuItems);
 
-  // Filtrar itens do menu baseado nas permissões do token
   useEffect(() => {
     const filtered = menuItems.filter(item => {
-      // Se for root, pode acessar tudo
       if (isRoot()) {
         return true;
       }
-      // Verificar permissão específica
       return hasPermission(item.permission);
     });
     setFilteredMenuItems(filtered);

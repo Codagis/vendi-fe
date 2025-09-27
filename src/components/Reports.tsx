@@ -19,7 +19,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
 
-// Mock data for reports
 const salesByPeriod = [
   { period: '2024-01-15', sales: 15420.50, transactions: 87, customers: 45 },
   { period: '2024-01-16', sales: 12350.80, transactions: 72, customers: 38 },
@@ -72,7 +71,6 @@ const financialSummary = {
 export function Reports() {
   const [dateFrom, setDateFrom] = useState('2024-01-15');
   const [dateTo, setDateTo] = useState('2024-01-21');
-  // const [reportType] = useState('sales');
   const [selectedPeriod, setSelectedPeriod] = useState('daily');
 
   const formatCurrency = (value: number): string => {
@@ -87,7 +85,6 @@ export function Reports() {
   };
 
   const exportReport = (format: string): void => {
-    // Simulate export functionality
     alert(`Exportando relatório em formato ${format.toUpperCase()}...`);
   };
 

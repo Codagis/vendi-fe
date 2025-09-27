@@ -107,7 +107,6 @@ export function SecurityStatus({
 }: SecurityStatusProps) {
   const { isSecure, integrityCheck, warnings, errors } = securityStatus;
 
-  // Filtrar erros e warnings desnecessários
   const criticalErrors = errors.filter(error => 
     !error.includes('Token não fornecido') && 
     !error.includes('Token deve ser uma string') &&
@@ -119,9 +118,8 @@ export function SecurityStatus({
     !warning.includes('Token pode estar malformado')
   );
 
-  // Só mostrar se há problemas realmente críticos
   if (isSecure && criticalWarnings.length === 0 && criticalErrors.length === 0) {
-    return null; // Não mostrar nada se tudo estiver seguro
+    return null;
   }
 
   return (

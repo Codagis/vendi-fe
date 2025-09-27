@@ -1,9 +1,3 @@
-/**
- * Serviço para decodificação e manipulação de tokens JWT.
- * 
- * @author Sistema Vendi
- * @version 1.0
- */
 
 export interface UserTokenData {
   id: number;
@@ -22,32 +16,26 @@ export interface UserTokenData {
 }
 
 export interface JwtPayload {
-  sub: string; // username
+  sub: string;
   userData: UserTokenData;
-  iat: number; // issued at
-  exp: number; // expiration
+  iat: number;
+  exp: number;
 }
 
-/**
- * Decodifica um token JWT e retorna o payload.
- */
 export function decodeJWT(token: string): JwtPayload | null {
   try {
     if (!token) {
       return null;
     }
 
-    // Remove o prefixo "Bearer " se presente
     const cleanToken = token.replace(/^Bearer\s+/, '');
     
-    // Decodifica o JWT (base64url)
     const parts = cleanToken.split('.');
     if (parts.length !== 3) {
       console.error('Token JWT inválido: formato incorreto');
       return null;
     }
 
-    // Decodifica o payload (parte do meio)
     const payload = parts[1];
     const decodedPayload = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
     
@@ -58,9 +46,6 @@ export function decodeJWT(token: string): JwtPayload | null {
   }
 }
 
-/**
- * Verifica se o token está expirado.
- */
 export function isTokenExpired(token: string): boolean {
   const payload = decodeJWT(token);
   if (!payload) {
@@ -71,17 +56,11 @@ export function isTokenExpired(token: string): boolean {
   return payload.exp < now;
 }
 
-/**
- * Extrai os dados do usuário do token.
- */
 export function extractUserData(token: string): UserTokenData | null {
   const payload = decodeJWT(token);
   return payload?.userData || null;
 }
 
-/**
- * Verifica se o token é válido (não expirado e com dados válidos).
- */
 export function isTokenValid(token: string): boolean {
   if (!token) {
     return false;
@@ -95,9 +74,6 @@ export function isTokenValid(token: string): boolean {
   return userData !== null && userData.id > 0;
 }
 
-/**
- * Obtém o tempo restante do token em segundos.
- */
 export function getTokenTimeRemaining(token: string): number {
   const payload = decodeJWT(token);
   if (!payload) {
@@ -109,9 +85,6 @@ export function getTokenTimeRemaining(token: string): number {
   return Math.max(0, remaining);
 }
 
-/**
- * Obtém o tempo restante do token em formato legível.
- */
 export function getTokenTimeRemainingFormatted(token: string): string {
   const remaining = getTokenTimeRemaining(token);
   
@@ -131,3 +104,4 @@ export function getTokenTimeRemainingFormatted(token: string): string {
     return `${seconds}s`;
   }
 }
+

@@ -9,7 +9,6 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading } = useAuth();
 
-  // Mostrar loading enquanto verifica autenticação
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -21,11 +20,10 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  // Se não estiver autenticado, mostrar tela de login
   if (!isAuthenticated) {
     return <LoginScreen />;
   }
 
-  // Se estiver autenticado, mostrar o conteúdo protegido
   return <>{children}</>;
 }
+

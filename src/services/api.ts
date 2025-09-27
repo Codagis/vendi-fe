@@ -1,10 +1,8 @@
 import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { notificationService } from './notificationService';
 
-// Configuração base da API
 const API_BASE_URL = 'http://localhost:8080/api';
 
-// Interface para resposta da API
 export interface ApiResponse<T> {
   data: T;
   success: boolean;
@@ -12,7 +10,6 @@ export interface ApiResponse<T> {
   error?: string;
 }
 
-// Interface para login
 export interface LoginRequest {
   username: string;
   password: string;
@@ -49,7 +46,6 @@ export interface LoginResponse {
   expiresAt: string;
 }
 
-// Interface para usuário
 export interface Usuario {
   id: number;
   nome: string;
@@ -99,7 +95,6 @@ export interface Permissao {
   updatedAt: string;
 }
 
-// Interface para loja
 export interface Loja {
   id: number;
   nome: string;
@@ -119,7 +114,6 @@ export interface UsuarioStats {
   outrosPerfis: number;
 }
 
-// Classe para gerenciar a API
 class ApiService {
   private api: AxiosInstance;
 
@@ -131,7 +125,6 @@ class ApiService {
       },
     });
 
-    // Interceptor para adicionar token de autorização
     this.api.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
         const token = localStorage.getItem('token');
@@ -145,16 +138,13 @@ class ApiService {
       }
     );
 
-    // Interceptor para tratar respostas
     this.api.interceptors.response.use(
       (response: AxiosResponse) => {
         return response;
       },
       (error: any) => {
-        // Sempre tratar erros com notificação
         notificationService.handleApiError(error);
         
-        // Se for 401 e não for erro de login, redirecionar
         if (error.response?.status === 401 && !error.config?.url?.includes('/auth/login')) {
           localStorage.removeItem('token');
           localStorage.removeItem('user');
@@ -166,7 +156,6 @@ class ApiService {
     );
   }
 
-  // Métodos genéricos para chamadas HTTP
   async post<T>(url: string, data?: any, config?: any): Promise<AxiosResponse<T>> {
     return await this.api.post<T>(url, data, config);
   }
@@ -183,7 +172,6 @@ class ApiService {
     return await this.api.delete<T>(url, config);
   }
 
-  // Métodos de autenticação
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     const response = await this.api.post<LoginResponse>('/auth/login', credentials);
     return response.data;
@@ -203,7 +191,6 @@ class ApiService {
     return response.data;
   }
 
-  // Métodos de usuários
   async getUsuarios(filters?: {
     nome?: string;
     username?: string;
@@ -250,7 +237,6 @@ class ApiService {
     return response.data;
   }
 
-  // Métodos para perfis
   async getPerfis(): Promise<Perfil[]> {
     const response = await this.api.get<Perfil[]>('/perfis');
     return response.data;
@@ -284,7 +270,6 @@ class ApiService {
     await this.api.patch(`/perfis/${id}/status`, null, { params: { ativo } });
   }
 
-  // Métodos para permissões
   async getPermissoes(): Promise<Permissao[]> {
     const response = await this.api.get<Permissao[]>('/permissoes');
     return response.data;
@@ -333,10 +318,7 @@ class ApiService {
     await this.api.patch(`/permissoes/${id}/status`, null, { params: { ativo } });
   }
 
-  // Métodos para lojas (mock por enquanto)
   async getLojas(): Promise<Loja[]> {
-    // Por enquanto, retorna dados mockados
-    // Em uma implementação real, você criaria endpoints para lojas
     return [
       { id: 1, nome: 'Loja Matriz', codigo: '001', ativo: true, empresaId: 1 },
       { id: 2, nome: 'Loja Shopping', codigo: '002', ativo: true, empresaId: 1 },
@@ -345,10 +327,8 @@ class ApiService {
   }
 }
 
-// Instância singleton do serviço
 export const apiService = new ApiService();
 
-// Funções auxiliares para gerenciar autenticação
 export const authUtils = {
   setToken: (token: string) => {
     localStorage.setItem('token', token);

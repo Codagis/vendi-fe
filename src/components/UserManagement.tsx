@@ -23,28 +23,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Switch } from './ui/switch';
 import { Checkbox } from './ui/checkbox';
 import { ConfirmationDialog } from './ui/confirmation-dialog';
-import { apiService, type Usuario, type Perfil, type UsuarioStats } from '../services/api';
+import { apiService, type Usuario, type Perfil, type UsuarioStats, type Permissao } from '../services/api';
 import { notificationService } from '../services/notificationService';
-
-// Dados mockados removidos - usando apenas dados do backend
-
-const allPermissions = [
-  { id: 'dashboard', label: 'Dashboard', category: 'Sistema' },
-  { id: 'pos', label: 'PDV - Vendas', category: 'Vendas' },
-  { id: 'products', label: 'Produtos', category: 'Cadastros' },
-  { id: 'customers', label: 'Clientes', category: 'Cadastros' },
-  { id: 'customers_view', label: 'Clientes (Apenas Visualizar)', category: 'Cadastros' },
-  { id: 'inventory', label: 'Estoque', category: 'Operações' },
-  { id: 'financial', label: 'Financeiro', category: 'Financeiro' },
-  { id: 'reports', label: 'Relatórios', category: 'Relatórios' },
-  { id: 'reports_view', label: 'Relatórios (Apenas Visualizar)', category: 'Relatórios' },
-  { id: 'users', label: 'Usuários', category: 'Sistema' },
-  { id: 'settings', label: 'Configurações', category: 'Sistema' }
-];
 
 export function UserManagement() {
   const [users, setUsers] = useState<Usuario[]>([]);
   const [perfis, setPerfis] = useState<Perfil[]>([]);
+  const [permissoes, setPermissoes] = useState<Permissao[]>([]);
   const [stats, setStats] = useState<UsuarioStats | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState('all');
@@ -63,31 +48,28 @@ export function UserManagement() {
     permissions: [] as string[]
   });
 
-  // Estados para popup de confirmação de exclusão
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<Usuario | null>(null);
   const [deleteValidation, setDeleteValidation] = useState<{ canDelete: boolean; reasons?: string[] } | null>(null);
   const [isValidatingDelete, setIsValidatingDelete] = useState(false);
 
-  // Carregar perfis e estatísticas ao montar o componente
   useEffect(() => {
     loadPerfis();
+    loadPermissoes();
     loadStats();
   }, []);
 
-  // Carregar usuários quando os perfis estiverem carregados ou quando os filtros mudarem
   useEffect(() => {
     if (perfis.length > 0) {
       loadUsers();
     }
   }, [perfis, selectedRole]);
 
-  // Debounce para busca por texto
   useEffect(() => {
     if (perfis.length > 0) {
       const timeoutId = setTimeout(() => {
         loadUsers();
-      }, 300); // 300ms de delay
+      }, 300);
 
       return () => clearTimeout(timeoutId);
     }
@@ -99,7 +81,6 @@ export function UserManagement() {
       setPerfis(perfisData);
     } catch (error) {
       console.error('Erro ao carregar perfis:', error);
-      // Fallback para perfis mockados
       const perfisMock = [
         { id: 1, nome: 'Administrador', codigo: 'admin', ativo: true, sistema: true, deleted: false, createdAt: '', updatedAt: '' },
         { id: 2, nome: 'Vendedor', codigo: 'seller', ativo: true, sistema: true, deleted: false, createdAt: '', updatedAt: '' },
@@ -110,13 +91,37 @@ export function UserManagement() {
     }
   };
 
+  const loadPermissoes = async () => {
+    try {
+      const permissoesData = await apiService.getPermissoesAtivas();
+      setPermissoes(permissoesData);
+      console.log('Permissões carregadas:', permissoesData);
+    } catch (error) {
+      console.error('Erro ao carregar permissões:', error);
+      // Fallback para permissões básicas se a API falhar
+      const permissoesFallback = [
+        { id: 1, chave: 'dashboard', nome: 'Dashboard', categoria: 'Sistema', ativo: true, createdAt: '', updatedAt: '' },
+        { id: 2, chave: 'pos', nome: 'PDV - Vendas', categoria: 'Vendas', ativo: true, createdAt: '', updatedAt: '' },
+        { id: 3, chave: 'products', nome: 'Produtos', categoria: 'Cadastros', ativo: true, createdAt: '', updatedAt: '' },
+        { id: 4, chave: 'customers', nome: 'Clientes', categoria: 'Cadastros', ativo: true, createdAt: '', updatedAt: '' },
+        { id: 5, chave: 'customers_view', nome: 'Clientes (Apenas Visualizar)', categoria: 'Cadastros', ativo: true, createdAt: '', updatedAt: '' },
+        { id: 6, chave: 'inventory', nome: 'Estoque', categoria: 'Operações', ativo: true, createdAt: '', updatedAt: '' },
+        { id: 7, chave: 'financial', nome: 'Financeiro', categoria: 'Financeiro', ativo: true, createdAt: '', updatedAt: '' },
+        { id: 8, chave: 'reports', nome: 'Relatórios', categoria: 'Relatórios', ativo: true, createdAt: '', updatedAt: '' },
+        { id: 9, chave: 'reports_view', nome: 'Relatórios (Apenas Visualizar)', categoria: 'Relatórios', ativo: true, createdAt: '', updatedAt: '' },
+        { id: 10, chave: 'users', nome: 'Usuários', categoria: 'Sistema', ativo: true, createdAt: '', updatedAt: '' },
+        { id: 11, chave: 'settings', nome: 'Configurações', categoria: 'Sistema', ativo: true, createdAt: '', updatedAt: '' }
+      ];
+      setPermissoes(permissoesFallback);
+    }
+  };
+
   const loadStats = async () => {
     try {
       const statsData = await apiService.getUsuarioStats();
       setStats(statsData);
     } catch (error) {
       console.error('Erro ao carregar estatísticas:', error);
-      // Fallback para estatísticas zeradas
       setStats({
         totalUsuarios: 0,
         usuariosAtivos: 0,
@@ -131,18 +136,15 @@ export function UserManagement() {
   const loadUsers = async () => {
     setIsLoading(true);
     try {
-      // Preparar filtros para o backend
       const filters: any = {};
       
       if (searchTerm.trim()) {
-        // Enviar o termo de busca para todos os campos: nome, username e email
         filters.nome = searchTerm;
         filters.username = searchTerm;
         filters.email = searchTerm;
       }
       
       if (selectedRole !== 'all') {
-        // Encontrar o perfilId baseado no código do perfil selecionado
         const perfilSelecionado = perfis.find(p => p.codigo === selectedRole);
         if (perfilSelecionado) {
           filters.perfilId = perfilSelecionado.id;
@@ -152,20 +154,17 @@ export function UserManagement() {
       const usuarios = await apiService.getUsuarios(filters);
       setUsers(usuarios);
       
-      // Recarregar estatísticas se não há filtros ativos (mostra dados gerais)
       if (!searchTerm.trim() && selectedRole === 'all') {
         loadStats();
       }
     } catch (error) {
       console.error('Erro ao carregar usuários:', error);
-      // Em caso de erro, manter lista vazia
       setUsers([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Os usuários já vêm filtrados do backend
   const filteredUsers = users;
 
   const resetForm = () => {
@@ -188,13 +187,10 @@ export function UserManagement() {
   };
 
   const handleEditUser = (user: Usuario) => {
-    // Encontrar o perfil do usuário
-    let perfilCodigo = 'seller'; // default
+    let perfilCodigo = 'seller';
     if (user.perfilNome) {
-      // Primeiro tentar encontrar por código
       let perfil = perfis.find(p => p.codigo === user.perfilNome);
       
-      // Se não encontrar por código, tentar por nome
       if (!perfil) {
         perfil = perfis.find(p => p.nome.toLowerCase() === user.perfilNome.toLowerCase());
       }
@@ -270,7 +266,6 @@ export function UserManagement() {
     }
 
         try {
-          // Encontrar o perfilId baseado no código do perfil selecionado
           const perfilSelecionado = perfis.find(p => p.codigo === formData.role);
           if (!perfilSelecionado) {
             alert('Perfil selecionado não encontrado');
@@ -284,12 +279,11 @@ export function UserManagement() {
             cracha: formData.cracha || null,
             perfilId: perfilSelecionado.id,
             ativo: formData.status === 'active',
-            empresaId: 1, // Empresa padrão - em uma implementação real, você teria um dropdown
-            lojaId: 1, // Loja padrão - em uma implementação real, você teria um dropdown
-            permissions: formData.permissions // Incluir permissões na criação e atualização
+            empresaId: 1,
+            lojaId: 1,
+            permissions: formData.permissions
           };
 
-      // Só incluir senha se não estiver vazia
       if (formData.password && formData.password.trim() !== '') {
         userData.senha = formData.password;
       }
@@ -300,13 +294,11 @@ export function UserManagement() {
         await apiService.createUsuario(userData);
       }
 
-      // Recarregar lista de usuários
       await loadUsers();
       setIsAddDialogOpen(false);
       resetForm();
       notificationService.showSuccess('Usuário salvo com sucesso!');
     } catch (error: any) {
-      // O erro já foi tratado pelo interceptor da API
       console.error('Erro ao salvar usuário:', error);
     }
   };
@@ -317,20 +309,17 @@ export function UserManagement() {
       const user = users.find(u => u.id === userId);
       if (user) {
         await apiService.alterarStatusUsuario(userId, !user.ativo);
-        await loadUsers(); // Recarregar lista
+        await loadUsers();
         notificationService.showSuccess(`Usuário ${!user.ativo ? 'ativado' : 'desativado'} com sucesso!`);
       }
     } catch (error: any) {
-      // O erro já foi tratado pelo interceptor da API
       console.error('Erro ao alterar status do usuário:', error);
     }
   };
 
   const getRoleInfo = (perfilNome: string): { label: string; color: string } => {
-    // Primeiro, tentar encontrar por código
     let perfil = perfis.find(p => p.codigo === perfilNome);
     
-    // Se não encontrar por código, tentar por nome
     if (!perfil) {
       perfil = perfis.find(p => p.nome.toLowerCase() === perfilNome.toLowerCase());
     }
@@ -384,7 +373,7 @@ export function UserManagement() {
   const getDefaultPermissions = (role: string): string[] => {
     switch (role) {
       case 'admin':
-        return ['all'];
+        return permissoes.map(p => p.chave); // Admin tem todas as permissões
       case 'seller':
         return ['dashboard', 'pos', 'customers', 'reports_view'];
       case 'stock':
@@ -404,12 +393,15 @@ export function UserManagement() {
     });
   };
 
-  // Group permissions by category
-  const permissionsByCategory = allPermissions.reduce((acc: any, permission: any) => {
-    if (!acc[permission.category]) {
-      acc[permission.category] = [];
+  const permissionsByCategory = permissoes.reduce((acc: any, permission: Permissao) => {
+    if (!acc[permission.categoria]) {
+      acc[permission.categoria] = [];
     }
-    acc[permission.category].push(permission);
+    acc[permission.categoria].push({
+      id: permission.chave,
+      label: permission.nome,
+      category: permission.categoria
+    });
     return acc;
   }, {});
 
@@ -784,28 +776,34 @@ export function UserManagement() {
                   </div>
                 ) : (
                   <div className="space-y-4 max-h-64 overflow-y-auto">
-                    {Object.entries(permissionsByCategory).map(([category, permissions]) => (
-                      <div key={category} className="space-y-2">
-                        <h4 className="font-medium text-gray-900 text-sm">{category}</h4>
-                        <div className="space-y-2 pl-4">
-                          {(permissions as any[]).map((permission: any) => (
-                            <div key={permission.id} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={permission.id}
-                                checked={formData.permissions.includes(permission.id)}
-                                onCheckedChange={(checked: any) => handlePermissionChange(permission.id, checked)}
-                              />
-                              <Label 
-                                htmlFor={permission.id}
-                                className="text-sm font-normal cursor-pointer"
-                              >
-                                {permission.label}
-                              </Label>
-                            </div>
-                          ))}
-                        </div>
+                    {permissoes.length === 0 ? (
+                      <div className="text-center py-4 text-gray-500">
+                        <p>Carregando permissões...</p>
                       </div>
-                    ))}
+                    ) : (
+                      Object.entries(permissionsByCategory).map(([category, permissions]) => (
+                        <div key={category} className="space-y-2">
+                          <h4 className="font-medium text-gray-900 text-sm">{category}</h4>
+                          <div className="space-y-2 pl-4">
+                            {(permissions as any[]).map((permission: any) => (
+                              <div key={permission.id} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={permission.id}
+                                  checked={formData.permissions.includes(permission.id)}
+                                  onCheckedChange={(checked: any) => handlePermissionChange(permission.id, checked)}
+                                />
+                                <Label 
+                                  htmlFor={permission.id}
+                                  className="text-sm font-normal cursor-pointer"
+                                >
+                                  {permission.label}
+                                </Label>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 )}
               </div>

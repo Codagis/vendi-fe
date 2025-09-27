@@ -24,7 +24,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Verificar autenticação ao carregar a aplicação
   useEffect(() => {
     checkAuth();
   }, []);
@@ -33,7 +32,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       setIsLoading(true);
       
-      // Verificar se há token no localStorage
       const token = authUtils.getToken();
       if (!token) {
         setIsAuthenticated(false);
@@ -41,24 +39,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return;
       }
 
-      // Verificar se o token é válido localmente
       if (!isTokenValid(token)) {
-        // Token expirado, tentar refresh token
         await tryRefreshToken();
         return;
       }
-
-      // Extrair dados do usuário do token
       const userData = extractUserData(token);
       if (!userData) {
-        // Dados do usuário inválidos, limpar dados
         authUtils.removeToken();
         setIsAuthenticated(false);
         setUser(null);
         return;
       }
 
-      // Converter UserTokenData para User
       const user: User = {
         id: userData.id,
         username: userData.username,
@@ -68,36 +60,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
         ativo: userData.ativo,
         contaBloqueada: userData.contaBloqueada,
         perfil: {
-          id: 0, // Não disponível no token
+          id: 0,
           nome: userData.perfilNome,
-          codigo: '', // Não disponível no token
-          ativo: true,
+          codigo: '',           ativo: true,
           permissoes: userData.permissoes.map(chave => ({
-            id: 0, // Não disponível no token
+            id: 0,
             chave,
-            nome: chave, // Usar chave como nome
-            descricao: '', // Não disponível no token
-            ativa: true
+            nome: chave,             descricao: '',             ativa: true
           }))
         },
         empresa: {
           id: userData.empresaId,
           razaoSocial: userData.empresaNome,
           nomeFantasia: userData.empresaNome,
-          cnpj: '', // Não disponível no token
-          ativa: true
+          cnpj: '',           ativa: true
         },
         loja: userData.lojaId ? {
           id: userData.lojaId,
           nome: userData.lojaNome || '',
           ativa: true
         } : null,
-        ultimoLogin: null, // Não disponível no token
-        tentativasFalhadas: 0, // Não disponível no token
-        deleted: false
+        ultimoLogin: null,         tentativasFalhadas: 0,         deleted: false
       };
 
-      // Token válido e dados extraídos com sucesso
       setIsAuthenticated(true);
       setUser(user);
       
@@ -123,11 +108,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       const response = await apiService.refreshToken(refreshToken);
       
-      // Salvar novos tokens
       authUtils.setToken(response.accessToken);
       authUtils.setRefreshToken(response.refreshToken);
       
-      // Verificar autenticação novamente com o novo token
       await checkAuth();
       
     } catch (error) {
@@ -149,17 +132,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       const response: LoginResponse = await apiService.login(loginRequest);
       
-      // Salvar tokens
       authUtils.setToken(response.token);
       authUtils.setRefreshToken(response.refreshToken);
       
-      // Extrair dados do usuário do token
       const userData = extractUserData(response.token);
       if (!userData) {
         throw new Error('Erro ao extrair dados do usuário do token');
       }
 
-      // Converter UserTokenData para User
       const user: User = {
         id: userData.id,
         username: userData.username,
@@ -169,46 +149,38 @@ export function AuthProvider({ children }: AuthProviderProps) {
         ativo: userData.ativo,
         contaBloqueada: userData.contaBloqueada,
         perfil: {
-          id: 0, // Não disponível no token
+          id: 0,
           nome: userData.perfilNome,
-          codigo: '', // Não disponível no token
-          ativo: true,
+          codigo: '',           ativo: true,
           permissoes: userData.permissoes.map(chave => ({
-            id: 0, // Não disponível no token
+            id: 0,
             chave,
-            nome: chave, // Usar chave como nome
-            descricao: '', // Não disponível no token
-            ativa: true
+            nome: chave,             descricao: '',             ativa: true
           }))
         },
         empresa: {
           id: userData.empresaId,
           razaoSocial: userData.empresaNome,
           nomeFantasia: userData.empresaNome,
-          cnpj: '', // Não disponível no token
-          ativa: true
+          cnpj: '',           ativa: true
         },
         loja: userData.lojaId ? {
           id: userData.lojaId,
           nome: userData.lojaNome || '',
           ativa: true
         } : null,
-        ultimoLogin: null, // Não disponível no token
-        tentativasFalhadas: 0, // Não disponível no token
-        deleted: false
+        ultimoLogin: null,         tentativasFalhadas: 0,         deleted: false
       };
 
       setUser(user);
       setIsAuthenticated(true);
       
-      // Salvar flag de autenticação
       localStorage.setItem('isAuthenticated', 'true');
       localStorage.setItem('authTimestamp', Date.now().toString());
       
       notificationService.showSuccess('Login realizado com sucesso!');
     } catch (error) {
       console.error('Erro no login:', error);
-      // O erro já foi tratado pelo interceptor da API
       throw error;
     } finally {
       setIsLoading(false);
@@ -216,18 +188,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const logout = () => {
-    // Limpar todos os dados sensíveis
     authUtils.removeToken();
     setUser(null);
     setIsAuthenticated(false);
     
-    // Limpar localStorage completamente
     localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('authTimestamp');
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     
-    // Limpar sessionStorage
     sessionStorage.clear();
     
     notificationService.showInfo('Logout realizado com sucesso!');

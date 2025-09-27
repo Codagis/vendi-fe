@@ -1,11 +1,6 @@
 import { useAuth } from '../contexts/AuthContext';
 import { useSecurity } from './useSecurity';
 
-/**
- * Hook personalizado para verificar permissões do usuário
- * Considera usuários root que têm acesso a tudo
- * Integrado com sistema de segurança robusto
- */
 export function usePermissions() {
   const { user } = useAuth();
   const security = useSecurity();
@@ -37,7 +32,6 @@ export function usePermissions() {
     isRoot,
     canAccessModule,
     user,
-    // Expor funcionalidades de segurança
     securityStatus: security.getSecurityStatus(),
     hasSecurityIssues: security.hasCriticalSecurityIssues(),
     revalidateSecurity: security.revalidateSecurity
