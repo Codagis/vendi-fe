@@ -19,17 +19,26 @@ import {
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
+import { Check, ChevronsUpDown } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Switch } from './ui/switch';
 import { Checkbox } from './ui/checkbox';
 import { ConfirmationDialog } from './ui/confirmation-dialog';
+import { FormInput } from './ui/form-field';
 import { apiService, type Usuario, type Perfil, type UsuarioStats, type Permissao } from '../services/api';
+import { Empresa, Loja } from '../types';
 import { notificationService } from '../services/notificationService';
+import { validateEmail } from '../utils/masks';
 
 export function UserManagement() {
   const [users, setUsers] = useState<Usuario[]>([]);
   const [perfis, setPerfis] = useState<Perfil[]>([]);
   const [permissoes, setPermissoes] = useState<Permissao[]>([]);
+  const [lojas, setLojas] = useState<Loja[]>([]);
+  const [lojaOpen, setLojaOpen] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [stats, setStats] = useState<UsuarioStats | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState('all');
@@ -45,6 +54,7 @@ export function UserManagement() {
     cracha: '',
     role: 'seller',
     status: 'active',
+    lojaId: 0,
     permissions: [] as string[]
   });
 
@@ -56,6 +66,7 @@ export function UserManagement() {
   useEffect(() => {
     loadPerfis();
     loadPermissoes();
+    loadLojasForUserSelection();
     loadStats();
   }, []);
 
@@ -74,6 +85,7 @@ export function UserManagement() {
       return () => clearTimeout(timeoutId);
     }
   }, [searchTerm]);
+
 
   const loadPerfis = async () => {
     try {
@@ -113,6 +125,16 @@ export function UserManagement() {
         { id: 11, chave: 'settings', nome: 'Configurações', categoria: 'Sistema', ativo: true, createdAt: '', updatedAt: '' }
       ];
       setPermissoes(permissoesFallback);
+    }
+  };
+
+  const loadLojasForUserSelection = async () => {
+    try {
+      const lojasData = await apiService.getLojasForUserSelection();
+      setLojas(lojasData);
+    } catch (error) {
+      console.error('Erro ao carregar lojas:', error);
+      setLojas([]);
     }
   };
 
@@ -176,9 +198,13 @@ export function UserManagement() {
       cracha: '',
       role: 'seller',
       status: 'active',
+      lojaId: 0,
       permissions: []
     });
     setEditingUser(null);
+    setLojaOpen(false);
+    setValidationErrors({});
+    loadLojasForUserSelection();
   };
 
   const handleAddUser = () => {
@@ -208,9 +234,14 @@ export function UserManagement() {
       cracha: user.cracha || '',
       role: perfilCodigo,
       status: user.ativo ? 'active' : 'inactive',
+      lojaId: user.lojaId || 0,
       permissions: user.permissions || []
     });
     setEditingUser(user);
+    setLojaOpen(false);
+    setValidationErrors({});
+    loadLojasForUserSelection();
+    
     setIsAddDialogOpen(true);
   };
 
@@ -255,13 +286,8 @@ export function UserManagement() {
   };
 
   const handleSaveUser = async () => {
-    if (!formData.username || !formData.name || !formData.email) {
-      alert('Preencha todos os campos obrigatórios');
-      return;
-    }
-
-    if (!editingUser && !formData.password) {
-      alert('Senha é obrigatória para novos usuários');
+    if (!validateForm()) {
+      notificationService.showError('Por favor, corrija os erros nos campos obrigatórios');
       return;
     }
 
@@ -279,8 +305,7 @@ export function UserManagement() {
             cracha: formData.cracha || null,
             perfilId: perfilSelecionado.id,
             ativo: formData.status === 'active',
-            empresaId: 1,
-            lojaId: 1,
+            lojaId: formData.lojaId,
             permissions: formData.permissions
           };
 
@@ -386,11 +411,74 @@ export function UserManagement() {
   };
 
   const handleRoleChange = (newRole: string) => {
+    clearFieldError('role');
     setFormData({
       ...formData,
       role: newRole,
       permissions: getDefaultPermissions(newRole)
     });
+  };
+
+  const handleLojaChange = (lojaId: string) => {
+    clearFieldError('lojaId');
+    setFormData({
+      ...formData,
+      lojaId: parseInt(lojaId)
+    });
+  };
+
+  const getSelectedLojaName = () => {
+    const loja = lojas.find(l => l.id === formData.lojaId);
+    return loja ? loja.nome : "Selecione a loja";
+  };
+
+  const getSelectedLojaSubtitle = () => {
+    const loja = lojas.find(l => l.id === formData.lojaId);
+    return loja ? loja.empresaRazaoSocial : "";
+  };
+
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    // Validação de campos obrigatórios
+    if (!formData.name.trim()) {
+      errors.name = 'Nome Completo é obrigatório';
+    }
+
+    if (!formData.username.trim()) {
+      errors.username = 'Nome de Usuário é obrigatório';
+    }
+
+    if (!formData.email.trim()) {
+      errors.email = 'E-mail é obrigatório';
+    } else if (!validateEmail(formData.email)) {
+      errors.email = 'E-mail inválido';
+    }
+
+    if (!editingUser && !formData.password.trim()) {
+      errors.password = 'Senha é obrigatória para novos usuários';
+    }
+
+    if (!formData.role) {
+      errors.role = 'Papel é obrigatório';
+    }
+
+    if (!formData.lojaId) {
+      errors.lojaId = 'Loja é obrigatória';
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const clearFieldError = (fieldName: string) => {
+    if (validationErrors[fieldName]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[fieldName];
+        return newErrors;
+      });
+    }
   };
 
   const permissionsByCategory = permissoes.reduce((acc: any, permission: Permissao) => {
@@ -650,7 +738,7 @@ export function UserManagement() {
 
       {/* Add/Edit User Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="!max-w-[60vw] !w-[60vw] max-h-[90vh] overflow-y-auto" style={{ width: '60vw', maxWidth: '60vw' }}>
           <DialogHeader>
             <DialogTitle>
               {editingUser ? 'Editar Usuário' : 'Novo Usuário'}
@@ -660,53 +748,83 @@ export function UserManagement() {
             </DialogDescription>
           </DialogHeader>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div>
-                <Label>Nome Completo *</Label>
-                <Input
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
+            <div className="space-y-6 h-full">
+              <div className="space-y-2">
+                <FormInput
+                  label={
+                    <span>
+                      Nome Completo <span className="text-red-500">*</span>
+                    </span>
+                  }
                   placeholder="Digite o nome completo"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) => {
+                    clearFieldError('name');
+                    setFormData({ ...formData, name: e.target.value });
+                  }}
+                  error={validationErrors.name}
                 />
               </div>
               
-              <div>
-                <Label>Nome de Usuário *</Label>
-                <Input
+              <div className="space-y-2">
+                <FormInput
+                  label={
+                    <span>
+                      Nome de Usuário <span className="text-red-500">*</span>
+                    </span>
+                  }
                   placeholder="Digite o nome de usuário"
                   value={formData.username}
-                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                  onChange={(e) => {
+                    clearFieldError('username');
+                    setFormData({ ...formData, username: e.target.value });
+                  }}
+                  error={validationErrors.username}
                 />
               </div>
               
-              <div>
-                <Label>E-mail *</Label>
-                <Input
+              <div className="space-y-2">
+                <FormInput
+                  label={
+                    <span>
+                      E-mail <span className="text-red-500">*</span>
+                    </span>
+                  }
                   type="email"
                   placeholder="usuario@email.com"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) => {
+                    clearFieldError('email');
+                    setFormData({ ...formData, email: e.target.value });
+                  }}
+                  error={validationErrors.email}
                 />
               </div>
               
-              <div>
-                <Label>Crachá</Label>
-                <Input
+              <div className="space-y-2">
+                <FormInput
+                  label="Crachá"
                   placeholder="Digite o número do crachá (opcional)"
                   value={formData.cracha}
                   onChange={(e) => setFormData({ ...formData, cracha: e.target.value })}
                 />
               </div>
               
-              <div>
-                <Label>Senha {!editingUser && '*'}</Label>
+              <div className="space-y-2">
+                <Label>
+                  Senha {!editingUser && <span className="text-red-500">*</span>}
+                </Label>
                 <div className="relative">
                   <Input
                     type={showPassword ? 'text' : 'password'}
                     placeholder={editingUser ? 'Deixe em branco para manter atual' : 'Digite a senha'}
                     value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    onChange={(e) => {
+                      clearFieldError('password');
+                      setFormData({ ...formData, password: e.target.value });
+                    }}
+                    className={validationErrors.password ? 'border-red-500' : ''}
                   />
                   <Button
                     type="button"
@@ -718,32 +836,49 @@ export function UserManagement() {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
                 </div>
+                {validationErrors.password && (
+                  <p className="text-sm text-red-500">{validationErrors.password}</p>
+                )}
               </div>
               
-              <div>
-                <Label>Papel *</Label>
+              <div className="space-y-2">
+                <Label>
+                  Papel <span className="text-red-500">*</span>
+                </Label>
                 <Select value={formData.role} onValueChange={handleRoleChange}>
-                  <SelectTrigger>
-                    <SelectValue />
+                  <SelectTrigger className={`!py-2 !h-auto ${validationErrors.role ? 'border-red-500' : ''}`} style={{ paddingTop: '8px', paddingBottom: '8px', height: 'auto' }}>
+                    <SelectValue className="text-left">
+                      <div className="flex flex-col items-start text-left">
+                        <span className="font-medium">
+                          {perfis.find(p => p.codigo === formData.role)?.nome || 'Selecione o papel'}
+                        </span>
+                        {perfis.find(p => p.codigo === formData.role)?.descricao && (
+                          <span className="text-sm text-gray-500">
+                            {perfis.find(p => p.codigo === formData.role)?.descricao}
+                          </span>
+                        )}
+                      </div>
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {perfis.map(perfil => (
                       <SelectItem key={perfil.codigo} value={perfil.codigo}>
-                        <div className="flex items-center gap-2">
-                          <div>
-                            <div>{perfil.nome}</div>
-                            {perfil.descricao && (
-                              <div className="text-xs text-gray-500">{perfil.descricao}</div>
-                            )}
-                          </div>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{perfil.nome}</span>
+                          {perfil.descricao && (
+                            <span className="text-sm text-gray-500">{perfil.descricao}</span>
+                          )}
                         </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {validationErrors.role && (
+                  <p className="text-sm text-red-500">{validationErrors.role}</p>
+                )}
               </div>
               
-              <div>
+              <div className="space-y-2">
                 <Label>Status</Label>
                 <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
                   <SelectTrigger>
@@ -755,27 +890,89 @@ export function UserManagement() {
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="space-y-2">
+                <Label>
+                  Loja <span className="text-red-500">*</span>
+                </Label>
+                <Popover open={lojaOpen} onOpenChange={setLojaOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={lojaOpen}
+                      className={`w-full justify-between h-auto py-2 ${validationErrors.lojaId ? 'border-red-500' : ''}`}
+                    >
+                      <div className="flex flex-col items-start text-left">
+                        <span className="font-medium">{getSelectedLojaName()}</span>
+                        {getSelectedLojaSubtitle() && (
+                          <span className="text-sm text-gray-500">{getSelectedLojaSubtitle()}</span>
+                        )}
+                      </div>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                    <Command>
+                      <CommandInput 
+                        placeholder="Buscar loja ou empresa..." 
+                        className="border-0 focus:ring-0 focus:outline-none"
+                      />
+                      <CommandList>
+                        <CommandEmpty>Nenhuma loja encontrada.</CommandEmpty>
+                        <CommandGroup>
+                          {lojas.map((loja) => (
+                            <CommandItem
+                              key={loja.id}
+                              value={`${loja.nome} ${loja.empresaRazaoSocial}`}
+                              onSelect={() => {
+                                handleLojaChange(loja.id.toString());
+                                setLojaOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={`mr-2 h-4 w-4 ${
+                                  formData.lojaId === loja.id ? "opacity-100" : "opacity-0"
+                                }`}
+                              />
+                              <div className="flex flex-col">
+                                <span className="font-medium">{loja.nome}</span>
+                                <span className="text-sm text-gray-500">{loja.empresaRazaoSocial}</span>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                {validationErrors.lojaId && (
+                  <p className="text-sm text-red-500">{validationErrors.lojaId}</p>
+                )}
+              </div>
             </div>
             
-            <div className="space-y-4">
-              <div>
+            <div className="space-y-4 lg:col-span-2 h-full">
+              <div className="h-full flex flex-col">
                 <Label className="text-base font-medium">Permissões</Label>
                 <p className="text-sm text-gray-500 mb-4">
                   Selecione as funcionalidades que este usuário poderá acessar
                 </p>
                 
                 {formData.role === 'admin' ? (
-                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                    <div className="flex items-center gap-2 text-red-700">
-                      <Shield className="h-5 w-5" />
-                      <span className="font-medium">Acesso Total</span>
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex-1 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="flex items-center gap-2 text-red-700 justify-center">
+                        <Shield className="h-5 w-5" />
+                        <span className="font-medium">Acesso Total</span>
+                      </div>
+                      <p className="text-sm text-red-600 mt-1">
+                        Administradores têm acesso a todas as funcionalidades do sistema.
+                      </p>
                     </div>
-                    <p className="text-sm text-red-600 mt-1">
-                      Administradores têm acesso a todas as funcionalidades do sistema.
-                    </p>
                   </div>
                 ) : (
-                  <div className="space-y-4 max-h-64 overflow-y-auto">
+                  <div className="space-y-4 flex-1 overflow-y-auto min-h-[400px] max-h-[500px] border border-gray-200 rounded-lg p-4">
                     {permissoes.length === 0 ? (
                       <div className="text-center py-4 text-gray-500">
                         <p>Carregando permissões...</p>

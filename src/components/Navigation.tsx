@@ -26,6 +26,8 @@ const menuItems = [
   { id: 'inventory', label: 'Estoque', icon: Warehouse, color: 'bg-yellow-500', permission: 'inventory' },
   { id: 'financial', label: 'Financeiro', icon: DollarSign, color: 'bg-emerald-500', permission: 'financial' },
   { id: 'reports', label: 'Relatórios', icon: FileText, color: 'bg-blue-600', permission: 'reports' },
+  { id: 'empresas', label: 'Empresas', icon: Store, color: 'bg-teal-500', permission: 'empresas' },
+  { id: 'lojas', label: 'Lojas', icon: Store, color: 'bg-cyan-500', permission: 'lojas' },
   { id: 'users', label: 'Usuários', icon: UserCog, color: 'bg-gray-500', permission: 'users' },
   { id: 'perfis', label: 'Perfis', icon: Shield, color: 'bg-indigo-500', permission: 'perfis' },
   { id: 'permissoes', label: 'Permissões', icon: Key, color: 'bg-rose-500', permission: 'permissoes' },
@@ -69,7 +71,7 @@ export function Navigation({ activeModule, setActiveModule, currentUser, onLogou
       return hasPermission(item.permission);
     });
     setFilteredMenuItems(filtered);
-  }, [hasPermission, isRoot]);
+  }, []); // Removendo dependências que causam loop infinito
 
   return (
     <div className="w-64 bg-white shadow-lg border-r border-gray-200 flex flex-col">

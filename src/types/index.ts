@@ -174,3 +174,64 @@ export interface PaginatedResponse<T> {
   limit: number;
   totalPages: number;
 }
+
+export interface Empresa {
+  id: number;
+  razaoSocial: string;
+  nomeFantasia?: string;
+  cnpj: string;
+  inscricaoEstadual?: string;
+  inscricaoMunicipal?: string;
+  endereco?: string;
+  numero?: string;
+  complemento?: string;
+  bairro?: string;
+  cidade?: string;
+  uf?: string;
+  cep?: string;
+  telefone?: string;
+  email?: string;
+  site?: string;
+  ativo: boolean;
+  urlLogo?: string;
+  enderecoCompleto?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EmpresaStats {
+  totalEmpresas: number;
+  empresasAtivas: number;
+  empresasInativas: number;
+  totalLojas: number;
+  totalUsuarios: number;
+}
+
+export interface Loja {
+  id: number;
+  nome: string;
+  codigo: string;
+  descricao?: string;
+  endereco?: string;
+  numero?: string;
+  complemento?: string;
+  bairro?: string;
+  cidade?: string;
+  uf?: string;
+  cep?: string;
+  telefone?: string;
+  ativo: boolean;
+  enderecoCompleto?: string;
+  empresaId: number;
+  empresaRazaoSocial: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LojaStats {
+  totalLojas: number;
+  lojasAtivas: number;
+  lojasInativas: number;
+  totalUsuarios: number;
+  totalEmpresas: number;
+}

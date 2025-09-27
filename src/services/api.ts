@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { notificationService } from './notificationService';
+import { Empresa, EmpresaStats, Loja, LojaStats } from '../types';
 
 const API_BASE_URL = 'http://localhost:8080/api';
 
@@ -318,12 +319,118 @@ class ApiService {
     await this.api.patch(`/permissoes/${id}/status`, null, { params: { ativo } });
   }
 
-  async getLojas(): Promise<Loja[]> {
-    return [
-      { id: 1, nome: 'Loja Matriz', codigo: '001', ativo: true, empresaId: 1 },
-      { id: 2, nome: 'Loja Shopping', codigo: '002', ativo: true, empresaId: 1 },
-      { id: 3, nome: 'Loja Bairro', codigo: '003', ativo: true, empresaId: 1 }
-    ];
+  async getLojas(filters?: {
+    nome?: string;
+    codigo?: string;
+    empresaId?: number;
+    ativo?: boolean;
+  }): Promise<Loja[]> {
+    // Filtrar apenas parâmetros que têm valor
+    const cleanFilters = filters ? Object.fromEntries(
+      Object.entries(filters).filter(([_, value]) => 
+        value !== undefined && value !== null && value !== ''
+      )
+    ) : {};
+    
+    const response = await this.api.get<Loja[]>('/lojas/all', { params: cleanFilters });
+    return response.data;
+  }
+
+  async getLojaStats(): Promise<LojaStats> {
+    const response = await this.api.get<LojaStats>('/lojas/stats');
+    return response.data;
+  }
+
+  async getLoja(id: number): Promise<Loja> {
+    const response = await this.api.get<Loja>(`/lojas/${id}`);
+    return response.data;
+  }
+
+  async getLojasByEmpresa(empresaId: number): Promise<Loja[]> {
+    const response = await this.api.get<Loja[]>(`/lojas/empresa/${empresaId}`);
+    return response.data;
+  }
+
+  async getLojasForUserSelection(searchTerm?: string): Promise<Loja[]> {
+    const filters = searchTerm ? { search: searchTerm } : {};
+    const response = await this.api.get<Loja[]>('/lojas/for-user-selection', { params: filters });
+    return response.data;
+  }
+
+  async createLoja(loja: Partial<Loja>): Promise<Loja> {
+    const response = await this.api.post<Loja>('/lojas', loja);
+    return response.data;
+  }
+
+  async updateLoja(id: number, loja: Partial<Loja>): Promise<Loja> {
+    const response = await this.api.put<Loja>(`/lojas/${id}`, loja);
+    return response.data;
+  }
+
+  async deleteLoja(id: number): Promise<void> {
+    await this.api.delete(`/lojas/${id}`);
+  }
+
+  async alterarStatusLoja(id: number, ativo: boolean): Promise<void> {
+    await this.api.patch(`/lojas/${id}/status`, null, { params: { ativo } });
+  }
+
+  async getEmpresas(filters?: {
+    razaoSocial?: string;
+    nomeFantasia?: string;
+    cnpj?: string;
+    email?: string;
+    ativo?: boolean;
+  }): Promise<Empresa[]> {
+    // Filtrar apenas parâmetros que têm valor
+    const cleanFilters = filters ? Object.fromEntries(
+      Object.entries(filters).filter(([_, value]) => 
+        value !== undefined && value !== null && value !== ''
+      )
+    ) : {};
+    
+    const response = await this.api.get<Empresa[]>('/empresas', { params: cleanFilters });
+    return response.data;
+  }
+
+  async getEmpresaStats(): Promise<EmpresaStats> {
+    const response = await this.api.get<EmpresaStats>('/empresas/stats');
+    return response.data;
+  }
+
+  async getEmpresa(id: number): Promise<Empresa> {
+    const response = await this.api.get<Empresa>(`/empresas/${id}`);
+    return response.data;
+  }
+
+  async createEmpresa(empresa: Partial<Empresa>): Promise<Empresa> {
+    const response = await this.api.post<Empresa>('/empresas', empresa);
+    return response.data;
+  }
+
+  async updateEmpresa(id: number, empresa: Partial<Empresa>): Promise<Empresa> {
+    const response = await this.api.put<Empresa>(`/empresas/${id}`, empresa);
+    return response.data;
+  }
+
+  async deleteEmpresa(id: number): Promise<void> {
+    await this.api.delete(`/empresas/${id}`);
+  }
+
+  async alterarStatusEmpresa(id: number, ativo: boolean): Promise<void> {
+    await this.api.patch(`/empresas/${id}/status`, null, { params: { ativo } });
+  }
+
+  async uploadLogoEmpresa(id: number, file: File): Promise<string> {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await this.api.post<{ urlLogo: string }>(`/empresas/${id}/logo`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data.urlLogo;
   }
 }
 

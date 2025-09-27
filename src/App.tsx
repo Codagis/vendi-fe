@@ -7,6 +7,8 @@ import { InventoryManagement } from './components/InventoryManagement';
 import { FinancialManagement } from './components/FinancialManagement';
 import { Reports } from './components/Reports';
 import { Navigation } from './components/Navigation';
+import { EmpresaManagement } from './components/EmpresaManagement';
+import { LojaManagement } from './components/LojaManagement';
 import { UserManagement } from './components/UserManagement';
 import { PerfilManagement } from './components/PerfilManagement';
 import { PermissaoManagement } from './components/PermissaoManagement';
@@ -41,6 +43,10 @@ export default function App(): JSX.Element {
         return <FinancialManagement />;
       case 'reports':
         return <Reports />;
+      case 'empresas':
+        return <EmpresaManagement />;
+      case 'lojas':
+        return <LojaManagement />;
       case 'users':
         return <UserManagement />;
       case 'perfis':
