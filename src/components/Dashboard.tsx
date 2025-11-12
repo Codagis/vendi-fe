@@ -2,6 +2,7 @@ import { } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
+import { Button } from './ui/button';
 import { 
   DollarSign, 
   ShoppingCart, 
@@ -13,6 +14,7 @@ import {
   BarChart3
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { MenuButton } from './ui/menu-button';
 import type { SalesData, CategoryData, TopProduct, LowStockProduct } from '../types';
 
 const salesData: SalesData[] = [
@@ -48,7 +50,11 @@ const lowStockProducts: LowStockProduct[] = [
   { id: 4, name: 'Cabo Lightning', current: 1, minimum: 25, status: 'critical' }
 ];
 
-export function Dashboard(): JSX.Element {
+interface DashboardProps {
+  onToggleSidebar?: () => void;
+}
+
+export function Dashboard({ onToggleSidebar }: DashboardProps): JSX.Element {
   const today = new Date().toLocaleDateString('pt-BR', { 
     weekday: 'long', 
     year: 'numeric', 
@@ -60,9 +66,12 @@ export function Dashboard(): JSX.Element {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 capitalize">{today}</p>
+        <div className="flex items-center gap-4">
+          <MenuButton onToggleSidebar={onToggleSidebar} />
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+            <p className="text-gray-600 capitalize">{today}</p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">

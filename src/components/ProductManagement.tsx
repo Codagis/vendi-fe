@@ -18,6 +18,7 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { MenuButton } from './ui/menu-button';
 
 const mockProducts = [
   {
@@ -77,7 +78,11 @@ const mockProducts = [
 const categories = ['Eletrônicos', 'Roupas', 'Casa', 'Alimentação', 'Esportes', 'Livros'];
 const units = ['UN', 'KG', 'L', 'M', 'PC', 'CX'];
 
-export function ProductManagement() {
+interface ProductManagementProps {
+  onToggleSidebar?: () => void;
+}
+
+export function ProductManagement({ onToggleSidebar }: ProductManagementProps) {
   const [products, setProducts] = useState(mockProducts);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -186,9 +191,12 @@ export function ProductManagement() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestão de Produtos</h1>
-          <p className="text-gray-600">Cadastre e gerencie produtos do seu estoque</p>
+        <div className="flex items-center gap-4">
+          <MenuButton onToggleSidebar={onToggleSidebar} />
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Gestão de Produtos</h1>
+            <p className="text-gray-600">Cadastre e gerencie produtos do seu estoque</p>
+          </div>
         </div>
         <Button onClick={handleAddProduct} className="bg-blue-600 hover:bg-blue-700">
           <Plus className="h-4 w-4 mr-2" />
@@ -349,7 +357,7 @@ export function ProductManagement() {
 
       {/* Add/Edit Product Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto custom-scroll">
           <DialogHeader>
             <DialogTitle>
               {editingProduct ? 'Editar Produto' : 'Novo Produto'}

@@ -20,6 +20,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { MenuButton } from './ui/menu-button';
 
 const mockCustomers = [
   {
@@ -86,7 +87,11 @@ const mockCustomers = [
 
 const customerCategories = ['Novo', 'Regular', 'VIP', 'Premium'];
 
-export function CustomerManagement() {
+interface CustomerManagementProps {
+  onToggleSidebar?: () => void;
+}
+
+export function CustomerManagement({ onToggleSidebar }: CustomerManagementProps) {
   const [customers, setCustomers] = useState(mockCustomers);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -204,9 +209,12 @@ export function CustomerManagement() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestão de Clientes</h1>
-          <p className="text-gray-600">Cadastre e gerencie seus clientes</p>
+        <div className="flex items-center gap-4">
+          <MenuButton onToggleSidebar={onToggleSidebar} />
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Gestão de Clientes</h1>
+            <p className="text-gray-600">Cadastre e gerencie seus clientes</p>
+          </div>
         </div>
         <Button onClick={handleAddCustomer} className="bg-blue-600 hover:bg-blue-700">
           <Plus className="h-4 w-4 mr-2" />
@@ -417,7 +425,7 @@ export function CustomerManagement() {
 
       {/* Add/Edit Customer Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto custom-scroll">
           <DialogHeader>
             <DialogTitle>
               {editingCustomer ? 'Editar Cliente' : 'Novo Cliente'}
@@ -514,7 +522,7 @@ export function CustomerManagement() {
       {/* Customer Details Dialog */}
       {selectedCustomer && (
         <Dialog open={!!selectedCustomer} onOpenChange={() => setSelectedCustomer(null)}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto custom-scroll">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />

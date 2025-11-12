@@ -18,6 +18,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
+import { MenuButton } from './ui/menu-button';
 
 const salesByPeriod = [
   { period: '2024-01-15', sales: 15420.50, transactions: 87, customers: 45 },
@@ -68,7 +69,11 @@ const financialSummary = {
   payables: 23150.70
 };
 
-export function Reports() {
+interface ReportsProps {
+  onToggleSidebar?: () => void;
+}
+
+export function Reports({ onToggleSidebar }: ReportsProps) {
   const [dateFrom, setDateFrom] = useState('2024-01-15');
   const [dateTo, setDateTo] = useState('2024-01-21');
   const [selectedPeriod, setSelectedPeriod] = useState('daily');
@@ -96,9 +101,12 @@ export function Reports() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Relatórios e Análises</h1>
-          <p className="text-gray-600">Visualize dados e exporte relatórios</p>
+        <div className="flex items-center gap-4">
+          <MenuButton onToggleSidebar={onToggleSidebar} />
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Relatórios e Análises</h1>
+            <p className="text-gray-600">Visualize dados e exporte relatórios</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button onClick={() => exportReport('excel')} variant="outline">

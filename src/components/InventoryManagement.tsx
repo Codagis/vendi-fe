@@ -22,6 +22,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { MenuButton } from './ui/menu-button';
 
 const mockProducts = [
   {
@@ -123,7 +124,11 @@ const movementReasons = {
   transfer: ['Transferência entre Filiais', 'Remanejamento Interno']
 };
 
-export function InventoryManagement() {
+interface InventoryManagementProps {
+  onToggleSidebar?: () => void;
+}
+
+export function InventoryManagement({ onToggleSidebar }: InventoryManagementProps) {
   const [products, setProducts] = useState(mockProducts);
   const [movements, setMovements] = useState(mockMovements);
   const [searchTerm, setSearchTerm] = useState('');
@@ -225,9 +230,12 @@ export function InventoryManagement() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestão de Estoque</h1>
-          <p className="text-gray-600">Controle entradas, saídas e movimentações</p>
+        <div className="flex items-center gap-4">
+          <MenuButton onToggleSidebar={onToggleSidebar} />
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Gestão de Estoque</h1>
+            <p className="text-gray-600">Controle entradas, saídas e movimentações</p>
+          </div>
         </div>
         <Button onClick={() => setIsMovementDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700">
           <ArrowUpDown className="h-4 w-4 mr-2" />

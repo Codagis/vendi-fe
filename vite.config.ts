@@ -10,4 +10,10 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./"),
     },
   },
+  server: {
+    charset: 'utf-8'
+  },
+  build: {
+    charset: 'utf-8'
+  }
 })

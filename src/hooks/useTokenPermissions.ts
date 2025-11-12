@@ -49,6 +49,14 @@ export function useTokenPermissions() {
     return user?.root === true;
   };
 
+  const isAdmin = (): boolean => {
+    return !user?.root && user?.perfil?.codigo === 'admin';
+  };
+
+  const isMaster = (): boolean => {
+    return isRoot() || isAdmin();
+  };
+
   const canAccessModule = (module: string): boolean => {
     if (!user) {
       return false;
@@ -91,6 +99,8 @@ export function useTokenPermissions() {
     hasAnyPermission,
     hasAllPermissions,
     isRoot,
+    isAdmin,
+    isMaster,
     canAccessModule,
     isTokenValid,
     getUserDataFromToken,

@@ -16,7 +16,8 @@ import {
   Building2,
   Calendar,
   FileText,
-  Hash
+  Hash,
+  Menu
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -36,7 +37,11 @@ import {
 } from '../utils/masks';
 import { ESTADOS_BRASILEIROS } from '../utils/estados';
 
-export function LojaManagement() {
+interface LojaManagementProps {
+  onToggleSidebar?: () => void;
+}
+
+export function LojaManagement({ onToggleSidebar }: LojaManagementProps) {
   const [lojas, setLojas] = useState<Loja[]>([]);
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [stats, setStats] = useState<LojaStats | null>(null);
@@ -326,9 +331,21 @@ export function LojaManagement() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestão de Lojas</h1>
-          <p className="text-gray-600">Gerencie as lojas/filiais do sistema</p>
+        <div className="flex items-center gap-4">
+          {onToggleSidebar && (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={onToggleSidebar}
+              className="h-10 w-10"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          )}
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Gestão de Lojas</h1>
+            <p className="text-gray-600">Gerencie as lojas/filiais do sistema</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button 
@@ -608,7 +625,7 @@ export function LojaManagement() {
 
       {/* Add/Edit Loja Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="!max-w-4xl max-h-[90vh] overflow-y-auto sm:!max-w-4xl">
+        <DialogContent className="!max-w-4xl max-h-[90vh] overflow-y-auto custom-scroll sm:!max-w-4xl">
           <DialogHeader>
             <DialogTitle>
               {editingLoja ? 'Editar Loja' : 'Nova Loja'}
@@ -755,7 +772,7 @@ export function LojaManagement() {
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione o estado" />
                         </SelectTrigger>
-                        <SelectContent className="max-h-60 overflow-y-auto">
+                        <SelectContent className="max-h-60 overflow-y-auto custom-scroll">
                           {ESTADOS_BRASILEIROS.map((estado) => (
                             <SelectItem key={estado.codigo} value={estado.uf}>
                               {estado.uf} - {estado.nome}

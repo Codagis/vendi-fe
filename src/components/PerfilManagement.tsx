@@ -10,7 +10,8 @@ import {
   Search, 
   Edit, 
   Trash2, 
-  RefreshCw
+  RefreshCw,
+  Menu
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
@@ -21,7 +22,11 @@ import { apiService, type Perfil, type Permissao } from '../services/api';
 import { notificationService } from '../services/notificationService';
 import { useTokenPermissions } from '../hooks/useTokenPermissions';
 
-export function PerfilManagement() {
+interface PerfilManagementProps {
+  onToggleSidebar?: () => void;
+}
+
+export function PerfilManagement({ onToggleSidebar }: PerfilManagementProps) {
   const { hasPermission } = useTokenPermissions();
   const [perfis, setPerfis] = useState<Perfil[]>([]);
   const [permissoes, setPermissoes] = useState<Permissao[]>([]);
@@ -213,9 +218,21 @@ export function PerfilManagement() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestão de Perfis</h1>
-          <p className="text-gray-600">Gerencie perfis e suas permissões no sistema</p>
+        <div className="flex items-center gap-4">
+          {onToggleSidebar && (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={onToggleSidebar}
+              className="h-10 w-10"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          )}
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Gestão de Perfis</h1>
+            <p className="text-gray-600">Gerencie perfis e suas permissões no sistema</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button 
@@ -371,7 +388,7 @@ export function PerfilManagement() {
 
       {/* Add/Edit Perfil Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto custom-scroll">
           <DialogHeader>
             <DialogTitle>
               {editingPerfil ? 'Editar Perfil' : 'Novo Perfil'}
@@ -437,7 +454,7 @@ export function PerfilManagement() {
                   Selecione as permissões que este perfil terá acesso
                 </p>
                 
-                <div className="space-y-4 max-h-64 overflow-y-auto">
+                <div className="space-y-4 max-h-64 overflow-y-auto custom-scroll">
                   {Object.entries(permissionsByCategory).map(([category, permissions]) => (
                     <div key={category} className="space-y-2">
                       <h4 className="font-medium text-gray-900 text-sm">{category}</h4>

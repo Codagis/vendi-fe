@@ -96,3 +96,7 @@ export const validateCEP = (cep: string): boolean => {
   const numbers = removeMask(cep);
   return numbers.length === 8;
 };
+
+
+
+

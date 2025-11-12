@@ -1,9 +1,14 @@
 import { usePermissions } from '../hooks/usePermissions';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { Shield, Key, User, Settings } from 'lucide-react';
+import { Button } from './ui/button';
+import { Shield, Key, User, Settings, Menu } from 'lucide-react';
 
-export function PermissionTest() {
+interface PermissionTestProps {
+  onToggleSidebar?: () => void;
+}
+
+export function PermissionTest({ onToggleSidebar }: PermissionTestProps) {
   const { hasPermission, hasAnyPermission, hasAllPermissions, isRoot, user } = usePermissions();
 
   const permissions = [
@@ -15,6 +20,26 @@ export function PermissionTest() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          {onToggleSidebar && (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={onToggleSidebar}
+              className="h-10 w-10"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          )}
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Teste de Permissões</h1>
+            <p className="text-gray-600">Teste e verifique as permissões do sistema</p>
+          </div>
+        </div>
+      </div>
+      
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

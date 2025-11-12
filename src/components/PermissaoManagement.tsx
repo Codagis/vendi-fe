@@ -13,7 +13,8 @@ import {
   RefreshCw,
   Filter,
   Eye,
-  EyeOff
+  EyeOff,
+  Menu
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
@@ -24,7 +25,11 @@ import { apiService, type Permissao } from '../services/api';
 import { notificationService } from '../services/notificationService';
 import { useTokenPermissions } from '../hooks/useTokenPermissions';
 
-export function PermissaoManagement() {
+interface PermissaoManagementProps {
+  onToggleSidebar?: () => void;
+}
+
+export function PermissaoManagement({ onToggleSidebar }: PermissaoManagementProps) {
   const { hasPermission } = useTokenPermissions();
   const [permissoes, setPermissoes] = useState<Permissao[]>([]);
   const [categorias, setCategorias] = useState<string[]>([]);
@@ -211,9 +216,21 @@ export function PermissaoManagement() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestão de Permissões</h1>
-          <p className="text-gray-600">Gerencie as permissões do sistema</p>
+        <div className="flex items-center gap-4">
+          {onToggleSidebar && (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={onToggleSidebar}
+              className="h-10 w-10"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          )}
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Gestão de Permissões</h1>
+            <p className="text-gray-600">Gerencie as permissões do sistema</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button 

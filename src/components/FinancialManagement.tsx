@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { MenuButton } from './ui/menu-button';
 
 const mockReceivables = [
   {
@@ -101,7 +102,11 @@ const mockCashFlow = [
 
 const categories = ['Fornecedores', 'Utilities', 'Marketing', 'Funcionários', 'Impostos', 'Outros'];
 
-export function FinancialManagement() {
+interface FinancialManagementProps {
+  onToggleSidebar?: () => void;
+}
+
+export function FinancialManagement({ onToggleSidebar }: FinancialManagementProps) {
   const [receivables, setReceivables] = useState(mockReceivables);
   const [payables, setPayables] = useState(mockPayables);
   const [isReceivableDialogOpen, setIsReceivableDialogOpen] = useState(false);
@@ -222,9 +227,12 @@ export function FinancialManagement() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestão Financeira</h1>
-          <p className="text-gray-600">Controle suas contas a receber e pagar</p>
+        <div className="flex items-center gap-4">
+          <MenuButton onToggleSidebar={onToggleSidebar} />
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Gestão Financeira</h1>
+            <p className="text-gray-600">Controle suas contas a receber e pagar</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button onClick={() => setIsReceivableDialogOpen(true)} className="bg-green-600 hover:bg-green-700">

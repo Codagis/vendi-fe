@@ -28,6 +28,7 @@ import { ConfirmationDialog } from './ui/confirmation-dialog';
 import { FormField, FormInput, FormSelect } from './ui/form-field';
 import { apiService } from '../services/api';
 import { notificationService } from '../services/notificationService';
+import { MenuButton } from './ui/menu-button';
 import { Empresa, EmpresaStats } from '../types';
 import { 
   formatCNPJ, 
@@ -41,7 +42,11 @@ import {
 } from '../utils/masks';
 import { ESTADOS_BRASILEIROS } from '../utils/estados';
 
-export function EmpresaManagement() {
+interface EmpresaManagementProps {
+  onToggleSidebar?: () => void;
+}
+
+export function EmpresaManagement({ onToggleSidebar }: EmpresaManagementProps) {
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [stats, setStats] = useState<EmpresaStats | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -364,9 +369,12 @@ export function EmpresaManagement() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestão de Empresas</h1>
-          <p className="text-gray-600">Gerencie as empresas do sistema</p>
+        <div className="flex items-center gap-4">
+          <MenuButton onToggleSidebar={onToggleSidebar} />
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Gestão de Empresas</h1>
+            <p className="text-gray-600">Gerencie as empresas do sistema</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button 
@@ -664,7 +672,7 @@ export function EmpresaManagement() {
 
       {/* Add/Edit Empresa Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="!max-w-[60vw] !w-[60vw] max-h-[90vh] overflow-y-auto" style={{ width: '60vw', maxWidth: '60vw' }}>
+        <DialogContent className="!max-w-[60vw] !w-[60vw] max-h-[90vh] overflow-y-auto custom-scroll" style={{ width: '60vw', maxWidth: '60vw' }}>
           <DialogHeader>
             <DialogTitle>
               {editingEmpresa ? 'Editar Empresa' : 'Nova Empresa'}
@@ -823,7 +831,7 @@ export function EmpresaManagement() {
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione o estado" />
                         </SelectTrigger>
-                        <SelectContent className="max-h-60 overflow-y-auto">
+                        <SelectContent className="max-h-60 overflow-y-auto custom-scroll">
                           {ESTADOS_BRASILEIROS.map((estado) => (
                             <SelectItem key={estado.codigo} value={estado.uf}>
                               {estado.uf} - {estado.nome}

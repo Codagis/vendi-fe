@@ -17,6 +17,7 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Label } from './ui/label';
+import { MenuButton } from './ui/menu-button';
 import type { Product, Customer, CartItem, PaymentMethod } from '../types';
 
 const mockProducts: Product[] = [
@@ -34,7 +35,11 @@ const mockCustomers: Customer[] = [
   { id: 3, name: 'Pedro Oliveira', cpf: '456.789.123-00', phone: '(11) 99999-9012' }
 ];
 
-export function POSSystem(): JSX.Element {
+interface POSSystemProps {
+  onToggleSidebar?: () => void;
+}
+
+export function POSSystem({ onToggleSidebar }: POSSystemProps): JSX.Element {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [barcode, setBarcode] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -116,7 +121,10 @@ export function POSSystem(): JSX.Element {
       {/* Products and Search */}
       <div className="lg:col-span-2 space-y-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">PDV - Ponto de Venda</h1>
+          <div className="flex items-center gap-4">
+          <MenuButton onToggleSidebar={onToggleSidebar} />
+            <h1 className="text-2xl font-bold text-gray-900">PDV - Ponto de Venda</h1>
+          </div>
           <Badge className="bg-green-100 text-green-800">Caixa Aberto</Badge>
         </div>
 
@@ -159,7 +167,7 @@ export function POSSystem(): JSX.Element {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="mb-4"
             />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-96 overflow-y-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-96 overflow-y-auto custom-scroll">
               {filteredProducts.map((product) => (
                 <div
                   key={product.id}
@@ -218,7 +226,7 @@ export function POSSystem(): JSX.Element {
             </div>
 
             {/* Cart Items */}
-            <div className="max-h-64 overflow-y-auto space-y-2">
+            <div className="max-h-64 overflow-y-auto space-y-2 custom-scroll">
               {cartItems.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <ShoppingCart className="h-12 w-12 mx-auto mb-2 opacity-50" />

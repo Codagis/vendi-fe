@@ -16,13 +16,18 @@ import {
   Shield,
   Download,
   Upload,
-  Save
+  Save,
+  Menu
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Separator } from './ui/separator';
 
-export function Settings() {
+interface SettingsProps {
+  onToggleSidebar?: () => void;
+}
+
+export function Settings({ onToggleSidebar }: SettingsProps) {
   const [settings, setSettings] = useState({
     storeName: 'Loja Centro - Ontime Sales',
     storeAddress: 'Rua Principal, 123, Centro, São Paulo - SP',
@@ -89,9 +94,21 @@ export function Settings() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Configurações do Sistema</h1>
-          <p className="text-gray-600">Personalize o sistema de acordo com suas necessidades</p>
+        <div className="flex items-center gap-4">
+          {onToggleSidebar && (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={onToggleSidebar}
+              className="h-10 w-10"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          )}
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Configurações do Sistema</h1>
+            <p className="text-gray-600">Personalize o sistema de acordo com suas necessidades</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button onClick={handleBackup} variant="outline">

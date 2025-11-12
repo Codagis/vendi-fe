@@ -37,7 +37,13 @@ export function decodeJWT(token: string): JwtPayload | null {
     }
 
     const payload = parts[1];
-    const decodedPayload = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    // Decodificar base64 com suporte a UTF-8
+    const decodedPayload = decodeURIComponent(
+      atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
+        .split('')
+        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
     
     return JSON.parse(decodedPayload) as JwtPayload;
   } catch (error) {

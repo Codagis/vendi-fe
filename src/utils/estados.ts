@@ -43,3 +43,7 @@ export const getEstadoByUF = (uf: string): Estado | undefined => {
 export const getEstadoByNome = (nome: string): Estado | undefined => {
   return ESTADOS_BRASILEIROS.find(estado => estado.nome === nome);
 };
+
+
+
+
